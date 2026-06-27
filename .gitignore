@@ -15,4 +15,7 @@ Steaming.Core/Configuration/PlatformAuthSecrets.Local.cs
 .codex/
 AGENTS.md
 CLAUDE.md
+Codex.md
 HANDOFF.md
+HANDOFF_history.md
+MISTAKES.md
