@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Steaming WinUI",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/Steaming.WinUI/bin/Debug/net10.0-windows10.0.19041.0/win-x64/Steaming.WinUI.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/Steaming.WinUI/bin/Debug/net10.0-windows10.0.19041.0/win-x64",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        }
+    ]
+}

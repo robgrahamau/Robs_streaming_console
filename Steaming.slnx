@@ -1,0 +1,12 @@
+<Solution>
+  <Project Path="Steaming.Application/Steaming.Application.csproj" />
+  <Project Path="Steaming.WinUI/Steaming.WinUI.csproj" />
+  <Project Path="Steaming.Core/Steaming.Core.csproj" />
+  <Project Path="Steaming.Data/Steaming.Data.csproj" />
+  <Project Path="Steaming.Web/Steaming.Web.csproj" />
+  <Properties>
+    <StartupProjects>
+      <StartupProject Path="Steaming.WinUI/Steaming.WinUI.csproj" />
+    </StartupProjects>
+  </Properties>
+</Solution>

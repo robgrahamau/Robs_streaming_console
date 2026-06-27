@@ -1,0 +1,293 @@
+<Page
+    x:Class="Steaming.WinUI.Pages.AvatarPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    RequestedTheme="Dark">
+
+    <Grid ColumnDefinitions="280,*" ColumnSpacing="0" Padding="20,20,0,20">
+
+        <!-- Left: compact scrollable controls -->
+        <ScrollViewer Grid.Column="0" Padding="0,0,14,0">
+            <StackPanel Spacing="12">
+
+                <TextBlock Text="VTuber Avatar" FontSize="18" FontWeight="SemiBold"/>
+
+                <!-- Model -->
+                <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8" Padding="14">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="MODEL" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <TextBox x:Name="ModelPathBox" Grid.Column="0"
+                                     PlaceholderText="No model loaded"
+                                     IsReadOnly="True" FontSize="12"/>
+                            <Button Grid.Column="1" Content="Browse…" Click="Browse_Click"/>
+                        </Grid>
+                        <TextBlock x:Name="StatusLabel" FontSize="11" TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                   Text="No model loaded."/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Microphone -->
+                <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8" Padding="14">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="MICROPHONE (LIP SYNC)" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <ComboBox x:Name="MicCombo" HorizontalAlignment="Stretch"
+                                  SelectionChanged="MicCombo_SelectionChanged"/>
+                        <Button Content="↺ Refresh" Click="RefreshMic_Click" FontSize="12"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Expressions -->
+                <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8" Padding="14">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="EXPRESSIONS" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <TextBlock FontSize="10" TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                   Text="Mouth Open and Round auto-respond to mic."/>
+                        <Slider x:Name="SliderAa" Header="Mouth Open"
+                                Minimum="0" Maximum="1" StepFrequency="0.01"
+                                ValueChanged="SliderExpr_Changed"/>
+                        <Slider x:Name="SliderIh" Header="I / EE"
+                                Minimum="0" Maximum="1" StepFrequency="0.01"
+                                ValueChanged="SliderExpr_Changed"/>
+                        <Slider x:Name="SliderOu" Header="Round / OO"
+                                Minimum="0" Maximum="1" StepFrequency="0.01"
+                                ValueChanged="SliderExpr_Changed"/>
+                        <Slider x:Name="SliderEe" Header="Smile"
+                                Minimum="0" Maximum="1" StepFrequency="0.01"
+                                ValueChanged="SliderExpr_Changed"/>
+                        <Slider x:Name="SliderOh" Header="O Sound"
+                                Minimum="0" Maximum="1" StepFrequency="0.01"
+                                ValueChanged="SliderExpr_Changed"/>
+                        <Button Content="Reset Expressions" Click="ResetExpressions_Click"
+                                Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8" Padding="14">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="SAVED POSES" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <TextBox x:Name="PoseNameBox" Grid.Column="0" PlaceholderText="Pose name..."/>
+                            <Button Grid.Column="1" Content="Save" Click="SavePose_Click"/>
+                        </Grid>
+                        <ComboBox x:Name="PoseListCombo" HorizontalAlignment="Stretch"
+                                  PlaceholderText="Select a saved pose"
+                                  SelectionChanged="PoseList_SelectionChanged"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button x:Name="LoadPoseBtn" Content="Load" IsEnabled="False" Click="LoadPose_Click"/>
+                            <Button x:Name="DeletePoseBtn" Content="Delete" IsEnabled="False" Click="DeletePose_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Output -->
+                <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8" Padding="14">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="OUTPUT" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <CheckBox x:Name="NdiToggle" Content="Send via NDI (DistroAV)"
+                                  Checked="NdiToggle_Changed" Unchecked="NdiToggle_Changed"/>
+                        <TextBlock FontSize="10" TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                   Text="Add DistroAV source &quot;Streaming Avatar&quot; in OBS."/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Start / Stop -->
+                <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8" Padding="14">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button x:Name="StartBtn" Content="▶ Start" Click="Start_Click"/>
+                        <Button x:Name="StopBtn"  Content="■ Stop"  Click="Stop_Click" IsEnabled="False"/>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Right: large preview — click any body part to pose it, right-drag to orbit -->
+        <Grid Grid.Column="1" x:Name="PreviewGrid"
+              Background="#FF0A0A0A"
+              PointerPressed="Preview_PointerPressed"
+              PointerMoved="Preview_PointerMoved"
+              PointerReleased="Preview_PointerReleased"
+              PointerWheelChanged="Preview_PointerWheelChanged">
+
+            <Image x:Name="PreviewImage" Stretch="Uniform"/>
+            <Canvas x:Name="PoseOverlay" IsHitTestVisible="False">
+                <Ellipse x:Name="IkTargetMarker"
+                         Width="20" Height="20"
+                         Fill="#55FFB000"
+                         Stroke="#FFFFD060"
+                         StrokeThickness="2"
+                         Visibility="Collapsed"/>
+            </Canvas>
+
+            <!-- Top-right hint -->
+            <Border VerticalAlignment="Top" HorizontalAlignment="Right"
+                    Background="#BB000000" CornerRadius="0,0,0,8" Padding="10,5">
+                <TextBlock x:Name="PreviewHintLabel"
+                           Text="Left-drag: orbit camera  ·  Right-drag: pan  ·  Scroll: zoom"
+                           FontSize="10" Foreground="#88FFFFFF"/>
+            </Border>
+
+            <Border HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Width="420"
+                    Margin="24,72,0,72"
+                    Background="#CC111111"
+                    CornerRadius="10"
+                    Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="TRACKING PREVIEW" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <Border Background="#66000000" CornerRadius="6" Height="300">
+                        <Grid>
+                            <Image x:Name="LargeCameraPreviewImage" Stretch="Uniform"/>
+                            <Canvas x:Name="LargeTrackingOverlayCanvas" IsHitTestVisible="False"/>
+                        </Grid>
+                    </Border>
+                    <TextBlock x:Name="RawTrackingDebugLabel"
+                               Text="No tracking sample."
+                               FontSize="12"
+                               TextWrapping="Wrap"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+            </Border>
+
+            <Border HorizontalAlignment="Right"
+                    VerticalAlignment="Stretch"
+                    Width="340"
+                    Margin="0,16,16,56"
+                    Background="#CC111111"
+                    CornerRadius="10"
+                    Padding="12">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="FACE TRACKING" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <ComboBox x:Name="CameraCombo" HorizontalAlignment="Stretch"
+                                  PlaceholderText="Select camera"
+                                  SelectionChanged="CameraCombo_SelectionChanged"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="↺ Refresh" Click="RefreshCamera_Click" FontSize="12"/>
+                            <Button Content="Start Tracking" Click="StartTracking_Click" FontSize="12"/>
+                            <Button Content="Stop Tracking" Click="StopTracking_Click" FontSize="12"/>
+                        </StackPanel>
+                        <CheckBox x:Name="FaceTrackingToggle" Content="Enable face tracking"
+                                  Checked="FaceTrackingToggle_Changed" Unchecked="FaceTrackingToggle_Changed"/>
+                        <CheckBox x:Name="AudioFallbackToggle" Content="Audio fallback when tracking confidence drops"
+                                  Checked="AudioFallbackToggle_Changed" Unchecked="AudioFallbackToggle_Changed"/>
+                        <CheckBox x:Name="VoiceOnlyToggle" Content="Voice-only mouth mode"
+                                  Checked="VoiceOnlyToggle_Changed" Unchecked="VoiceOnlyToggle_Changed"/>
+                        <ComboBox x:Name="TrackingModelCombo" Header="Tracking model"
+                                  SelectionChanged="TrackingModelCombo_SelectionChanged"/>
+                        <TextBlock FontSize="10" TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                   Text="MediaPipe requires face_detection_short.onnx + face_mesh.onnx in Assets/FaceTracking/MediaPipe/."/>
+                        <ComboBox x:Name="MouthModeCombo" Header="Mouth mode"
+                                  SelectionChanged="MouthModeCombo_SelectionChanged"/>
+                        <Slider x:Name="VoiceSensitivitySlider" Header="Volume sensitivity"
+                                Minimum="0.2" Maximum="2.5" StepFrequency="0.05"
+                                ValueChanged="VoiceSensitivity_Changed"/>
+                        <TextBlock Text="Calibration" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <TextBlock FontSize="10" TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                   Text="1. Relax and look forward, then capture neutral. 2. Close both eyes and capture blink. 3. Open your mouth wide and capture jaw. 4. Smile broadly and capture smile."/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Capture Neutral" Click="CaptureNeutral_Click" FontSize="12"/>
+                            <Button Content="Capture Blink" Click="CaptureBlink_Click" FontSize="12"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Capture Jaw Open" Click="CaptureJawOpen_Click" FontSize="12"/>
+                            <Button Content="Capture Smile" Click="CaptureSmile_Click" FontSize="12"/>
+                            <Button Content="Capture OH" Click="CaptureOh_Click" FontSize="12"/>
+                        </StackPanel>
+                        <Slider x:Name="EyeOpenOffsetSlider" Header="Eye open trim"
+                                Minimum="0" Maximum="0.5" StepFrequency="0.01"
+                                ValueChanged="EyeOpenOffset_Changed"/>
+                        <Slider x:Name="JawOpenScaleSlider" Header="Jaw strength"
+                                Minimum="0" Maximum="2" StepFrequency="0.05"
+                                ValueChanged="JawOpenScale_Changed"/>
+                        <Slider x:Name="HeadRotationScaleSlider" Header="Head rotation scale"
+                                Minimum="0.15" Maximum="1.5" StepFrequency="0.05"
+                                ValueChanged="HeadRotationScale_Changed"/>
+                        <TextBlock Text="Expression strength" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <TextBlock FontSize="10" TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                   Text="Scale how strongly each expression fires. Default 1.0. Raise OH to get more mouth rounding."/>
+                        <Slider x:Name="AaScaleSlider" Header="AA (open mouth) strength"
+                                Minimum="0.1" Maximum="3" StepFrequency="0.05"
+                                ValueChanged="AaScale_Changed"/>
+                        <Slider x:Name="IhScaleSlider" Header="IH (narrow) strength"
+                                Minimum="0.1" Maximum="3" StepFrequency="0.05"
+                                ValueChanged="IhScale_Changed"/>
+                        <Slider x:Name="OuScaleSlider" Header="OU (rounded+open) strength"
+                                Minimum="0.1" Maximum="3" StepFrequency="0.05"
+                                ValueChanged="OuScale_Changed"/>
+                        <Slider x:Name="EeScaleSlider" Header="EE (smile) strength"
+                                Minimum="0.1" Maximum="3" StepFrequency="0.05"
+                                ValueChanged="EeScale_Changed"/>
+                        <Slider x:Name="OhScaleSlider" Header="OH (lip round) strength"
+                                Minimum="0.1" Maximum="3" StepFrequency="0.05"
+                                ValueChanged="OhScale_Changed"/>
+                        <Button Content="Save Calibration" Click="SaveCalibration_Click" FontSize="12"/>
+                        <TextBlock Text="Avatar output" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <TextBlock x:Name="RetargetDebugLabel"
+                                   Text="No avatar retarget output."
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <TextBlock x:Name="TrackingStatusLabel"
+                                   Text="Provider: not started"
+                                   FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <TextBlock x:Name="CalibrationStatusLabel"
+                                   Text="Neutral calibration not captured."
+                                   FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Bottom bar: mode toggle + bone status + action buttons -->
+            <Border VerticalAlignment="Bottom" HorizontalAlignment="Stretch"
+                    Background="#CC000000" Padding="12,7">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                    <ToggleButton x:Name="PoseModeToggle" Grid.Column="0"
+                                  Content="Pose Mode" FontSize="10" Padding="10,3"
+                                  IsEnabled="False"
+                                  Checked="PoseMode_Changed" Unchecked="PoseMode_Changed"/>
+                    <TextBlock x:Name="BoneZoneLabel" Grid.Column="1"
+                               Text="No model loaded"
+                               FontSize="11" Foreground="#AAFFFFFF"
+                               VerticalAlignment="Center" Margin="4,0,0,0"/>
+                    <Button x:Name="ResetBonesBtn" Grid.Column="2"
+                            Content="Reset Pose" FontSize="10" Padding="10,3"
+                            IsEnabled="False" Click="ResetBones_Click"/>
+                    <Button Grid.Column="3"
+                            Content="Reset Camera" FontSize="10" Padding="10,3"
+                            Click="ResetCamera_Click"/>
+                </Grid>
+            </Border>
+
+        </Grid>
+
+    </Grid>
+</Page>

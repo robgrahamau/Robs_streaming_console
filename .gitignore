@@ -1,0 +1,12 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.bak
+
+# Release packaging output + bootstrapped tools (build/release.ps1) - large, regenerated
+artifacts/
+
+# Local platform OAuth secrets for this machine only. Keep the tracked example file instead.
+Steaming.Core/Configuration/PlatformAuthSecrets.Local.cs

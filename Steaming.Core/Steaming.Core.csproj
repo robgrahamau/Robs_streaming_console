@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>0.11.5</Version>
+    <AssemblyVersion>0.11.5.0</AssemblyVersion>
+    <FileVersion>0.11.5.0</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.33.0" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.76.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.72.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.8" />
+    <PackageReference Include="TwitchLib.Api" Version="3.10.2" />
+    <PackageReference Include="TwitchLib.Client" Version="4.0.1" />
+    <PackageReference Include="TwitchLib.EventSub.Websockets" Version="0.8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="Protos\youtube_stream_list.proto" GrpcServices="Client" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Configuration\PlatformAuthSecrets.Local.example.cs" />
+  </ItemGroup>
+
+</Project>

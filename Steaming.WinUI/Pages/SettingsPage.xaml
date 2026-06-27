@@ -1,0 +1,154 @@
+<Page
+    x:Class="Steaming.WinUI.Pages.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    RequestedTheme="Dark">
+
+    <ScrollViewer Padding="24">
+        <StackPanel Spacing="16" MaxWidth="680">
+
+            <!-- General -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="General" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock Text="Application data folder" FontSize="12"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBox x:Name="DataFolderBox" Grid.Column="0" IsReadOnly="True"/>
+                        <Button Grid.Column="1" Content="Open" Click="OpenDataFolder_Click"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Chat TTS -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Chat TTS" FontSize="16" FontWeight="SemiBold"/>
+
+                    <CheckBox x:Name="TtsEnabledCheck" Content="Enable Chat TTS"
+                              Checked="TtsEnabled_Changed" Unchecked="TtsEnabled_Changed"/>
+                    <CheckBox x:Name="AlertTtsEnabledCheck" Content="Read alerts aloud (follows, subs, bits, raids…)"
+                              Checked="AlertTtsEnabled_Changed" Unchecked="AlertTtsEnabled_Changed"/>
+
+                    <TextBlock Text="TTS engine" FontSize="12" Margin="0,8,0,0"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <ComboBox x:Name="TtsEnginePicker" MinWidth="360" HorizontalAlignment="Left"
+                              SelectionChanged="TtsEnginePicker_SelectionChanged">
+                        <ComboBoxItem Content="Windows (system voices)" Tag="WinRt"/>
+                        <ComboBoxItem Content="Kokoro (local neural · ONNX)" Tag="Kokoro"/>
+                    </ComboBox>
+
+                    <!-- Kokoro config — only relevant when the Kokoro engine is selected.
+                         Runs fully in-process; model/voices/espeak-ng are downloaded automatically. -->
+                    <StackPanel x:Name="KokoroPanel" Spacing="8" Margin="0,4,0,0" Visibility="Collapsed">
+                        <TextBlock FontSize="11" TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                   Text="Kokoro is an optional local neural voice that runs entirely inside the app. The model, the selected voice, and the espeak-ng pronunciation library download automatically the first time (~330 MB once). Until they're ready, TTS uses Windows voices."/>
+
+                        <TextBlock Text="Kokoro voice" FontSize="11"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <ComboBox x:Name="KokoroVoicePicker" MinWidth="360" HorizontalAlignment="Left"
+                                  SelectionChanged="KokoroVoicePicker_SelectionChanged"/>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,4,0,0">
+                            <Button x:Name="KokoroDownloadBtn" Grid.Column="0" Content="Download / verify"
+                                    Click="KokoroDownload_Click"/>
+                            <TextBlock x:Name="KokoroStatusText" Grid.Column="1" VerticalAlignment="Center"
+                                       TextWrapping="Wrap" FontSize="11"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <TextBlock Text="TTS voice" FontSize="12"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBlock FontSize="11" TextWrapping="Wrap"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               Text="All installed Windows voices are listed, including Narrator natural voices."/>
+                    <ComboBox x:Name="TtsVoicePicker" MinWidth="360" HorizontalAlignment="Left"
+                              SelectionChanged="TtsVoicePicker_SelectionChanged"/>
+
+                    <TextBlock Text="Speech speed" FontSize="12" Margin="0,8,0,0"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalAlignment="Center">
+                        <Slider x:Name="TtsSpeedSlider" Grid.Column="0"
+                                Minimum="0.5" Maximum="6.0" StepFrequency="0.05"
+                                ValueChanged="TtsSpeedSlider_ValueChanged"/>
+                        <TextBlock x:Name="TtsSpeedValueText" Grid.Column="1"
+                                   VerticalAlignment="Center" MinWidth="52" TextAlignment="Right"/>
+                    </Grid>
+
+                    <TextBlock Text="Audio output device" FontSize="12" Margin="0,8,0,0"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <ComboBox x:Name="TtsDevicePicker" MinWidth="360" HorizontalAlignment="Left"
+                              SelectionChanged="TtsDevicePicker_SelectionChanged"/>
+
+                    <TextBlock Text="Ignored users" FontSize="12" Margin="0,8,0,0"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBlock FontSize="11" TextWrapping="Wrap"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               Text="Comma-separated usernames whose chat is never read aloud (e.g. bot accounts). Bot commands starting with ! are always skipped."/>
+                    <TextBox x:Name="TtsIgnoredUsersBox" MinWidth="360" HorizontalAlignment="Stretch"
+                             PlaceholderText="nightbot, streamelements, …"
+                             TextChanged="TtsIgnoredUsers_TextChanged"/>
+
+                    <TextBlock Text="Test voice" FontSize="12" Margin="0,8,0,0"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                        <TextBox x:Name="TtsTestBox" Grid.Column="0"
+                                 PlaceholderText="Type something to speak…"
+                                 Text="Test to see how this sounds"/>
+                        <Button Grid.Column="1" x:Name="TtsSpeakBtn"
+                                Content="▶ Speak" Click="TtsSpeak_Click"/>
+                        <Button Grid.Column="2" x:Name="TtsStopBtn"
+                                Content="■ Stop" Click="TtsStop_Click"/>
+                    </Grid>
+                    <TextBlock x:Name="TtsStatusText" FontSize="11"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               Visibility="Collapsed"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Alert & command sounds -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Alert &amp; Command Sounds" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock FontSize="11" TextWrapping="Wrap"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               Text="Event sound files and chatbot command sounds play through this device. Pick a device OBS captures (e.g. a virtual cable) to send them to stream — separate from the TTS device above."/>
+                    <ComboBox x:Name="SoundDevicePicker" MinWidth="360" HorizontalAlignment="Left"
+                              SelectionChanged="SoundDevicePicker_SelectionChanged"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Chat display -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Chat Display" FontSize="16" FontWeight="SemiBold"/>
+                    <CheckBox x:Name="ShowTimestampsCheck" Content="Show timestamps in app chat"
+                              Checked="ShowTimestamps_Changed" Unchecked="ShowTimestamps_Changed"/>
+                </StackPanel>
+            </Border>
+
+            <!-- UI preference -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="UI Style" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock TextWrapping="Wrap" FontSize="13"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               Text="Show the UI picker on next launch to switch between Classic (WPF) and Command Center (WinUI 3)."/>
+                    <Button Content="Show UI Picker on Next Launch"
+                            Click="ClearUiPref_Click" HorizontalAlignment="Left"/>
+                    <TextBlock x:Name="ClearUiPrefMsg"
+                               Text="Preference cleared — UI picker will appear on next launch."
+                               FontSize="12" Foreground="#4CAF50" Visibility="Collapsed"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

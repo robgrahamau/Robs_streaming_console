@@ -1,0 +1,40 @@
+{
+  "source": {
+    "family": "OpenSeeFace",
+    "repository": "https://github.com/emilianavt/OpenSeeFace",
+    "license": "BSD-2-Clause",
+    "notes": "Vendored tracker assets for Steaming face tracking implementation."
+  },
+  "assets": [
+    {
+      "file": "mnv3_detection_opt.onnx",
+      "role": "primary_fast_detector",
+      "sha256": "0E8E4806766D85AB067A52C7AF0059D6E62F0630D4C01DBB7266C4A0F54AB2A5"
+    },
+    {
+      "file": "retinaface_640x640_opt.onnx",
+      "role": "hard_reacquire_detector",
+      "sha256": "C8672BF91CA858D7B51E258AC3936E35CE4AA19C562A173A7B28D391E4212274"
+    },
+    {
+      "file": "priorbox_640x640.json",
+      "role": "retinaface_priors",
+      "sha256": "98437538410BAFFBC63259498DBC655B8DFA4AB8B0414AFC6F11C3A9D5FA5F90"
+    },
+    {
+      "file": "lm_model3_opt.onnx",
+      "role": "primary_landmark_model",
+      "sha256": "5AA0AB2594ACAF2E1D3916A8DE56D065672DD1458DD5AB34075A37AB7CB7DDFA"
+    },
+    {
+      "file": "mnv3_gaze32_split_opt.onnx",
+      "role": "gaze_assist_model",
+      "sha256": "1D49E9675CFDA0CC26A2E7758AF6A68D6E9C0A48A264A3F53C3186B349AF9650"
+    },
+    {
+      "file": "OpenSeeFace.LICENSE.txt",
+      "role": "upstream_license",
+      "sha256": "3501F5343A2BE5B673B25643A5C1FF3DBE18F7E1B5AF297A451CE1575E8580C5"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-winui",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Steaming.WinUI/Steaming.WinUI.csproj",
+                "-c", "Debug",
+                "--no-incremental",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build",
+            "dependsOn": ["build-winui"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build-plugin",
+            "detail": "Compile the C++ OBS plugin (RelWithDebInfo). Run this if you changed plugin C++ before building the installer.",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "--build", "${workspaceFolder}/obs/obs-plugintemplate/build_x64",
+                "--config", "RelWithDebInfo"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Build Installer",
+            "detail": "Publish the app, stage the plugin, and compile the Windows installer EXE into artifacts/release/installer.",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy", "Bypass",
+                "-File", "${workspaceFolder}/build/release.ps1"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            }
+        }
+    ]
+}
