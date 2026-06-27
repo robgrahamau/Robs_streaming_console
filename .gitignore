@@ -10,3 +10,9 @@ artifacts/
 
 # Local platform OAuth secrets for this machine only. Keep the tracked example file instead.
 Steaming.Core/Configuration/PlatformAuthSecrets.Local.cs
+
+# Local agent/session instruction files should stay machine-local.
+.codex/
+AGENTS.md
+CLAUDE.md
+HANDOFF.md
