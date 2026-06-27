@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steaming — Code Review Report</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3348;
+    --text: #e2e4ef;
+    --muted: #7880a0;
+    --red: #ff5a5a;
+    --orange: #ff8c42;
+    --yellow: #f0c040;
+    --green: #4fd18a;
+    --blue: #5b9cf6;
+    --purple: #a78bfa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  .page { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .meta { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+  h2 { font-size: 18px; font-weight: 600; color: var(--blue); margin: 40px 0 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  h3 { font-size: 14px; font-weight: 600; color: #c8cce0; margin: 24px 0 10px; }
+  p { margin-bottom: 10px; color: var(--text); }
+  code { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 12.5px; color: #b8d4ff; }
+  pre { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin: 10px 0 14px; overflow-x: auto; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 12.5px; line-height: 1.5; color: #b8d4ff; }
+
+  .finding { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: 6px; padding: 14px 18px; margin-bottom: 12px; }
+  .finding.red    { border-left-color: var(--red); }
+  .finding.orange { border-left-color: var(--orange); }
+  .finding.yellow { border-left-color: var(--yellow); }
+  .finding.green  { border-left-color: var(--green); }
+
+  .finding-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+  .sev { font-size: 16px; flex-shrink: 0; }
+  .finding-id { font-weight: 700; font-size: 13px; color: #fff; }
+  .finding-title { font-weight: 600; font-size: 13px; color: var(--text); }
+  .file-tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 8px; font-size: 11px; font-family: 'Cascadia Code', 'Consolas', monospace; color: var(--muted); margin-left: auto; white-space: nowrap; }
+
+  .key-table, .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  .key-table th, .key-table td,
+  .summary-table th, .summary-table td { padding: 8px 12px; text-align: left; border: 1px solid var(--border); font-size: 13px; }
+  .key-table th, .summary-table th { background: var(--surface2); color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .key-table td:first-child { font-size: 16px; text-align: center; }
+  .summary-table tr:hover td { background: var(--surface); }
+  .summary-table .sev-cell { text-align: center; font-size: 14px; }
+
+  .section-label { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 10px; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+
+  .priority-block { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; margin-bottom: 14px; }
+  .priority-block h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+  .priority-block.p1 h4 { color: var(--red); }
+  .priority-block.p2 h4 { color: var(--orange); }
+  .priority-block.p3 h4 { color: var(--yellow); }
+  .priority-block.p4 h4 { color: var(--green); }
+  .priority-block ul { padding-left: 20px; }
+  .priority-block li { margin-bottom: 5px; font-size: 13px; color: var(--text); }
+  .fixed-badge { display: inline-block; background: #1a3a2a; border: 1px solid var(--green); border-radius: 4px; padding: 1px 8px; font-size: 11px; font-weight: 700; color: var(--green); margin-left: 8px; vertical-align: middle; }
+  .finding.fixed { opacity: 0.6; border-left-color: var(--green) !important; }
+  .finding.fixed .finding-title { text-decoration: line-through; }
+  .not-a-bug { display: inline-block; background: #2a2a1a; border: 1px solid var(--yellow); border-radius: 4px; padding: 1px 8px; font-size: 11px; font-weight: 700; color: var(--yellow); margin-left: 8px; }
+
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin-bottom: 32px; }
+  .toc h3 { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .toc a { color: var(--blue); text-decoration: none; font-size: 13px; display: block; padding: 2px 0; }
+  .toc a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Steaming — Code Review Report</h1>
+  <p class="meta">Date: 2026-06-14 &nbsp;|&nbsp; Version: v0.9.8 → v0.9.9 &nbsp;|&nbsp; Scope: Core, Application, WinUI, Data, OBS plugin &nbsp;|&nbsp; WPF excluded</p>
+  <div class="priority-block p4" style="margin-bottom:24px;">
+    <h4>v0.9.9 — Fixes Applied (2026-06-14, build-verified)</h4>
+    <ul>
+      <li><strong>4.1.1</strong> — emoji_rain_source.cpp: <code>&gt;</code> changed to <code>&gt;=</code> (buffer overread fixed)</li>
+      <li><strong>1.1.1</strong> — Re-examined: not a bug. Ternary at line 290 already handles <code>space == -1</code> correctly.</li>
+      <li><strong>1.3.1</strong> — OverlayDispatcher: <code>Stop()</code> added; unsubscribes EventBus + EmoteCache singleton</li>
+      <li><strong>1.3.2</strong> — SoundDispatcher: <code>Stop()</code> added. ViewerListService: Subscribe moved to <code>Start()</code>, Unsubscribe in <code>Stop()</code></li>
+      <li><strong>2.4.1</strong> — OverlaysPage + AlertEditorPage: GIF cache capped at 500 MB, FIFO eviction via <code>CacheGif()</code></li>
+    </ul>
+  </div>
+
+  <div class="toc">
+    <h3>Contents</h3>
+    <a href="#severity-key">Severity Key</a>
+    <a href="#part1">Part 1 — Steaming.Core &amp; Steaming.Application</a>
+    <a href="#part2">Part 2 — Steaming.WinUI</a>
+    <a href="#part3">Part 3 — Steaming.Data</a>
+    <a href="#part4">Part 4 — OBS Plugin (C++)</a>
+    <a href="#summary">Full Summary Table</a>
+    <a href="#priorities">Top Priorities</a>
+  </div>
+
+  <!-- SEVERITY KEY -->
+  <h2 id="severity-key">Severity Key</h2>
+  <table class="key-table">
+    <tr><th>Symbol</th><th>Meaning</th></tr>
+    <tr><td>🔴</td><td>Critical — crash, data loss, or security risk. Fix immediately.</td></tr>
+    <tr><td>🟠</td><td>High — behavioral bug or significant resource issue.</td></tr>
+    <tr><td>🟡</td><td>Medium — performance, code smell, or maintenance burden.</td></tr>
+    <tr><td>🟢</td><td>Low / Easy win — simplification with no functional risk.</td></tr>
+  </table>
+
+  <!-- PART 1 -->
+  <h2 id="part1">Part 1 — Steaming.Core &amp; Steaming.Application</h2>
+
+  <div class="section-label">1.1 — Major Bugs</div>
+
+  <div class="finding red fixed">
+    <div class="finding-header">
+      <span class="sev">🔴</span>
+      <span class="finding-id">1.1.1</span>
+      <span class="finding-title">Silent wrong output — text[1..space] when space == -1</span>
+      <span class="not-a-bug">NOT A BUG</span>
+      <span class="file-tag">ChatbotService.cs ~289</span>
+    </div>
+    <p>Re-examined: actual code at line 290 reads <code>(space &gt; 0 ? text[1..space] : text[1..])</code> — the ternary correctly handles <code>space == -1</code> by falling to <code>text[1..]</code>. No fix required.</p>
+  </div>
+
+  <div class="finding orange">
+    <div class="finding-header">
+      <span class="sev">🟠</span>
+      <span class="finding-id">1.1.2</span>
+      <span class="finding-title">Fire-and-forget async delivery loses events on shutdown</span>
+      <span class="file-tag">TwitchEventSubClient.cs ~28-34</span>
+    </div>
+    <p><code>PublishAsync()</code> is called with <code>ContinueWith(OnlyOnFaulted)</code> but the task is never awaited or registered with a shutdown token. During application shutdown, in-flight deliveries are abandoned silently, dropping chat events.</p>
+  </div>
+
+  <div class="finding orange">
+    <div class="finding-header">
+      <span class="sev">🟠</span>
+      <span class="finding-id">1.1.3</span>
+      <span class="finding-title">TOCTOU race between WebSocket state check and ReceiveAsync</span>
+      <span class="file-tag">ObsWebSocketService.cs ~84-102</span>
+    </div>
+    <p><code>ReadLoopAsync()</code> checks <code>_ws?.State == WebSocketState.Open</code> and then calls <code>ReceiveAsync()</code>. The socket can transition to Closed between the two operations, producing an unhandled <code>ObjectDisposedException</code>.</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">1.1.4</span>
+      <span class="finding-title">Emoji rain color encoding has no bounds validation</span>
+      <span class="file-tag">OverlayDispatcher.cs ~350-355</span>
+    </div>
+    <p><code>uint colorArgb</code> is bit-shifted and cast to byte with no range validation. A malformed value produces wrong colors silently rather than an error.</p>
+  </div>
+
+  <div class="section-label">1.2 — Orphaned / Dead Code</div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">1.2.1</span>
+      <span class="finding-title">Dead method — TwitchReq() never called</span>
+      <span class="file-tag">StreamDataService.cs ~126-132</span>
+    </div>
+    <p><code>TwitchReq(string url)</code> is defined but <code>HttpRequestMessage</code> is constructed directly in <code>PollOnceAsync()</code> instead. Leftover from an earlier refactor.</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">1.2.2</span>
+      <span class="finding-title">Duplicate JSON helpers — RemoteKickBridgeClient vs KickAdapter</span>
+      <span class="file-tag">RemoteKickBridgeClient.cs ~612 / KickAdapter.cs ~296</span>
+    </div>
+    <p><code>GetString()</code> / <code>GetBool()</code> / <code>GetInt()</code> in <code>RemoteKickBridgeClient</code> duplicate <code>TryGetString()</code> and friends in <code>KickAdapter</code>. Neither references the other.</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">1.2.3</span>
+      <span class="finding-title">Unused Platform assignment in RemoteKickBridgeClient</span>
+      <span class="file-tag">RemoteKickBridgeClient.cs ~318</span>
+    </div>
+    <p><code>Platform</code> is extracted from the JSON root and logged, but never used for any branching logic. Confusing dead assignment.</p>
+  </div>
+
+  <div class="section-label">1.3 — Memory Leaks</div>
+
+  <div class="finding orange fixed">
+    <div class="finding-header">
+      <span class="sev">🟠</span>
+      <span class="finding-id">1.3.1</span>
+      <span class="finding-title">Static singleton event never unsubscribed (OverlayDispatcher)</span>
+      <span class="fixed-badge">FIXED v0.9.9</span>
+      <span class="file-tag">OverlayDispatcher.cs ~67</span>
+    </div>
+    <p><code>Stop()</code> method added to <code>OverlayDispatcher</code>. Calls <code>_bus.Unsubscribe(OnEvent)</code> and <code>EmoteCache.Instance.OnDownloadComplete -= OnEmoteDownloadComplete</code>. Resets <code>_started</code> so Start/Stop cycles are safe.</p>
+  </div>
+
+  <div class="finding orange fixed">
+    <div class="finding-header">
+      <span class="sev">🟠</span>
+      <span class="finding-id">1.3.2</span>
+      <span class="finding-title">EventBus subscriptions accumulate across Start/Stop cycles</span>
+      <span class="fixed-badge">FIXED v0.9.9</span>
+      <span class="file-tag">SoundDispatcher.cs / ViewerListService.cs</span>
+    </div>
+    <p><code>SoundDispatcher</code>: <code>Stop()</code> added — calls <code>_bus.Unsubscribe(OnEvent)</code>. <code>ViewerListService</code>: Subscribe moved from constructor to <code>Start()</code>; <code>Stop()</code> calls <code>_bus.Unsubscribe(OnEventAsync)</code> before stopping the timer, so repeated Start/Stop cycles leave no stale handlers.</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">1.3.3</span>
+      <span class="finding-title">ViewerListService timer handler not removed before Stop()</span>
+      <span class="file-tag">ViewerListService.cs ~50-54</span>
+    </div>
+    <p><code>_timer.Elapsed += ...</code> is registered in <code>Start()</code>. <code>Stop()</code> disposes the timer but does not detach the handler first. On a subsequent <code>Start()</code>, a new handler is added to a new timer, and the old one may fire during the dispose window.</p>
+  </div>
+
+  <div class="section-label">1.4 — Performance</div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">1.4.1</span>
+      <span class="finding-title">Uncompiled Regex in hot path + double count()</span>
+      <span class="file-tag">ChatbotService.cs ~410-430</span>
+    </div>
+    <p><code>Regex.IsMatch()</code> is called per-message without a pre-compiled static instance — regex compilation on every message adds significant latency. <code>text.Count(char.IsUpper)</code> appears to be called twice on the same string in the same method. Both are GC-pressure sources in a high-frequency path.</p>
+    <p><strong>Fix:</strong> Declare <code>private static readonly Regex _pattern = new(..., RegexOptions.Compiled);</code> and cache the uppercase count.</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">1.4.2</span>
+      <span class="finding-title">Twitch follower API polled unconditionally every 30 s</span>
+      <span class="file-tag">StreamDataService.cs ~181-225</span>
+    </div>
+    <p>The follower endpoint is called every poll cycle (~2880 calls/day) regardless of whether the newest follower has changed. A comparison against <code>_lastTwitchNewestFollower</code> before making the call would skip ~99% of these requests.</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">1.4.3</span>
+      <span class="finding-title">All 11 label objects rebuilt on every SendAllLabels tick</span>
+      <span class="file-tag">OverlayDispatcher.cs ~243-259</span>
+    </div>
+    <p><code>SendAllLabelsAsync()</code> reconstructs and re-sorts all label values on every call even when only one label changed. Delta tracking would allow sending only changed labels.</p>
+  </div>
+
+  <div class="section-label">1.5 — Thread Safety</div>
+
+  <div class="finding orange">
+    <div class="finding-header">
+      <span class="sev">🟠</span>
+      <span class="finding-id">1.5.1</span>
+      <span class="finding-title">Timer tick race can send duplicate messages</span>
+      <span class="file-tag">ChatbotService.cs ~108</span>
+    </div>
+    <p><code>_timerTick.Elapsed</code> fires <code>CheckTimers()</code> without locking. If a slow handler causes two ticks to overlap, both can pass the cooldown check simultaneously and send the same timer message twice.</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">1.5.2</span>
+      <span class="finding-title">ViewModelBase.Set() has no thread guard</span>
+      <span class="file-tag">ViewModelBase.cs ~10-14</span>
+    </div>
+    <p><code>Set()</code> reads, compares, and writes a backing field with no synchronisation. Any ViewModel property written from a background thread while the UI thread reads it is an unguarded race. WinUI's dispatcher normally prevents this but is not enforced here.</p>
+  </div>
+
+  <div class="section-label">1.6 — Easy Wins</div>
+
+  <div class="finding green">
+    <div class="finding-header">
+      <span class="sev">🟢</span>
+      <span class="finding-id">1.6.1</span>
+      <span class="finding-title">Authorization header construction duplicated in 3+ services</span>
+      <span class="file-tag">ModerationService / TwitchAdapter / StreamManagementService</span>
+    </div>
+    <p>All three build <code>Authorization</code> headers independently. Extract to a <code>TwitchAuthorizationHelper.BuildHeaders()</code> static method.</p>
+  </div>
+
+  <div class="finding green">
+    <div class="finding-header">
+      <span class="sev">🟢</span>
+      <span class="finding-id">1.6.2</span>
+      <span class="finding-title">?? "" null-coalescing repeated ~10 times</span>
+      <span class="file-tag">OverlayDispatcher.cs ~248-256</span>
+    </div>
+    <p><code>StreamData?.RecentFollower ?? ""</code> and similar patterns appear ~10 times in one method. Assign to local variables at the top.</p>
+  </div>
+
+  <div class="finding green">
+    <div class="finding-header">
+      <span class="sev">🟢</span>
+      <span class="finding-id">1.6.3</span>
+      <span class="finding-title">Bare catch blocks silently swallow exceptions</span>
+      <span class="file-tag">TwitchBadgeService / DebugLogFile / ObsWebSocketService</span>
+    </div>
+    <p>Multiple <code>catch { }</code> blocks discard all exceptions with no logging. At minimum: <code>catch (Exception ex) { DebugLog(ex.Message); }</code></p>
+  </div>
+
+  <div class="finding green">
+    <div class="finding-header">
+      <span class="sev">🟢</span>
+      <span class="finding-id">1.6.4</span>
+      <span class="finding-title">Manual JsonDocument traversal — candidate for source generators</span>
+      <span class="file-tag">TwitchEventSubClient.cs / KickAdapter.cs</span>
+    </div>
+    <p>Heavy <code>JsonDocument.GetProperty()</code> chaining. These are prime candidates for <code>[JsonSerializable]</code> source generators (C# 11+), eliminating allocations and improving parse speed.</p>
+  </div>
+
+  <!-- PART 2 -->
+  <h2 id="part2">Part 2 — Steaming.WinUI</h2>
+
+  <div class="section-label">2.1 — Major Bugs</div>
+
+  <div class="finding orange">
+    <div class="finding-header">
+      <span class="sev">🟠</span>
+      <span class="finding-id">2.1.1</span>
+      <span class="finding-title">Background task uses disposed repository (AnalyticsPage)</span>
+      <span class="file-tag">AnalyticsPage.xaml.cs ~141, 259-265</span>
+    </div>
+    <p>A background task captures <code>_repo</code> at line 260. <code>OnNavigatedFrom</code> sets <code>_repo = null</code> after disposing it (line 52-53). If the page is navigated away while the task is running, the <code>DispatcherQueue.TryEnqueue</code> callback executes <code>repo.GetSnapshots()</code> on the already-disposed repository. The null check at line 265 is after the call, not before it.</p>
+    <p><strong>Fix:</strong> Capture <code>var repo = _repo;</code> before the background task, null-check it immediately, and cancel the task in <code>OnNavigatedFrom</code>.</p>
+  </div>
+
+  <div class="section-label">2.2 — Orphaned Code</div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">2.2.1</span>
+      <span class="finding-title">Empty SelectionChanged handlers wired in XAML</span>
+      <span class="file-tag">OverlaysPage.xaml.cs ~336 / GoalsLabelsPage.xaml.cs ~28</span>
+    </div>
+    <p><code>LabelList_SelectionChanged()</code> is wired to <code>SelectionChanged</code> in XAML on both pages but has a completely empty body. The binding adds dispatch overhead with zero benefit. Remove the handler and the XAML attribute.</p>
+  </div>
+
+  <div class="section-label">2.3 — MVVM Violations</div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">2.3.1</span>
+      <span class="finding-title">Goal CRUD logic embedded in BuildGoalExpander() code-behind</span>
+      <span class="file-tag">OverlaysPage.xaml.cs ~216-294</span>
+    </div>
+    <p>Inline click handlers inside <code>BuildGoalExpander()</code> perform save, push-to-overlay, and delete operations directly. This is business logic that belongs in the ViewModel as commands.</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">2.3.2</span>
+      <span class="finding-title">Chat preview rendering logic lives in ChatPage code-behind</span>
+      <span class="file-tag">ChatPage.xaml.cs ~141-232</span>
+    </div>
+    <p><code>RenderPreview()</code> performs color parsing, font construction, and control creation from configuration state. Should be a ViewModel helper or shared service.</p>
+  </div>
+
+  <div class="section-label">2.4 — Memory / Resource Issues</div>
+
+  <div class="finding orange">
+    <div class="finding-header">
+      <span class="sev">🟠</span>
+      <span class="finding-id">2.4.1</span>
+      <span class="finding-title">GIF frame cache has no size limit (potential OOM)</span>
+      <span class="file-tag">OverlaysPage.xaml.cs ~860-873</span>
+    </div>
+    <p><code>BitmapToWriteable()</code> converts GIF frames to <code>WriteableBitmap</code> and stores them in an unbounded cache. A 1920×1080 GIF at 60 frames consumes ~497 MB. Multiple such GIFs in an overlay set can exhaust working memory silently. Implement an LRU cache with a configurable byte-size cap.</p>
+  </div>
+
+  <div class="section-label">2.5 — Performance</div>
+
+  <div class="finding orange">
+    <div class="finding-header">
+      <span class="sev">🟠</span>
+      <span class="finding-id">2.5.1</span>
+      <span class="finding-title">Per-frame RotateTransform allocation in animation loop</span>
+      <span class="file-tag">OverlaysPage.xaml.cs ~694 / AlertEditorPage.xaml.cs ~403</span>
+    </div>
+    <p>A new <code>RotateTransform</code> object is allocated every animation frame for every element, even when the angle has not changed. This is the highest-frequency GC allocation source in the UI layer. Transforms should be created once and mutated (<code>.Angle = newValue</code>).</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">2.5.2</span>
+      <span class="finding-title">Synchronous GIF frame loading blocks UI thread</span>
+      <span class="file-tag">OverlaysPage.xaml.cs ~824-843</span>
+    </div>
+    <p><code>LoadGifFrames()</code> performs synchronous file I/O. A GIF with 50+ large frames will stall the UI thread visibly during load. Should be <code>async</code> with <code>await</code>.</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">2.5.3</span>
+      <span class="finding-title">ScrollIntoView triggers full layout pass on every chat message</span>
+      <span class="file-tag">DashboardPage.xaml.cs ~69</span>
+    </div>
+    <p><code>ChatList.ScrollIntoView()</code> forces a layout pass per message. On a busy chat (100+ msg/min) this causes continuous layout recalculation. Debounce to 100–200 ms intervals, or only scroll when the list is already at the bottom.</p>
+  </div>
+
+  <div class="section-label">2.6 — Duplicated Code (Easy Wins)</div>
+
+  <div class="finding green">
+    <div class="finding-header">
+      <span class="sev">🟢</span>
+      <span class="finding-id">2.6.1</span>
+      <span class="finding-title">Status bar refresh logic duplicated in MainWindow and DashboardPage</span>
+      <span class="file-tag">MainWindow.xaml.cs ~58-74 / DashboardPage.xaml.cs ~144-160</span>
+    </div>
+    <p><code>RefreshStatusBar()</code> and <code>RefreshPlatformDots()</code> are implemented identically in two files. Extract to a shared static helper.</p>
+  </div>
+
+  <div class="finding green">
+    <div class="finding-header">
+      <span class="sev">🟢</span>
+      <span class="finding-id">2.6.2</span>
+      <span class="finding-title">Color parsing duplicated across 3+ pages</span>
+      <span class="file-tag">OverlaysPage / AlertEditorPage / ChatPage</span>
+    </div>
+    <p><code>TryParseColor()</code> and <code>ParseBrush()</code> are copy-pasted between pages. Move to a <code>WinUIColorHelpers</code> static class.</p>
+  </div>
+
+  <div class="finding green">
+    <div class="finding-header">
+      <span class="sev">🟢</span>
+      <span class="finding-id">2.6.3</span>
+      <span class="finding-title">GIF loading utilities duplicated across OverlaysPage and AlertEditorPage</span>
+      <span class="file-tag">OverlaysPage.xaml.cs ~824-873 / AlertEditorPage.xaml.cs ~457-506</span>
+    </div>
+    <p><code>LoadGifFrames()</code>, <code>GetGifDelays()</code>, and <code>BitmapToWriteable()</code> are copy-pasted. Extract to a <code>GifFrameLoader</code> utility class — this also means the LRU fix (2.4.1) only needs to be implemented once.</p>
+  </div>
+
+  <div class="finding green">
+    <div class="finding-header">
+      <span class="sev">🟢</span>
+      <span class="finding-id">2.6.4</span>
+      <span class="finding-title">BuildTextGrid / text span rendering duplicated</span>
+      <span class="file-tag">OverlaysPage.xaml.cs / AlertEditorPage.xaml.cs</span>
+    </div>
+    <p>Shadow/outline text grid construction is nearly identical in both files. Extract to a <code>TextGridBuilder</code> helper — any future span rendering changes only need to be made once.</p>
+  </div>
+
+  <!-- PART 3 -->
+  <h2 id="part3">Part 3 — Steaming.Data</h2>
+
+  <div class="section-label">3.1 — SQL / Data Issues</div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">3.1.1</span>
+      <span class="finding-title">DDL migration uses string interpolation — SQL injection landmine</span>
+      <span class="file-tag">AnalyticsRepository.cs ~101-120</span>
+    </div>
+    <p><code>ALTER TABLE ... ADD COLUMN {col} {def}</code> uses string interpolation. The values are currently hardcoded tuples (safe), but the pattern is a landmine if column names are ever sourced from user input or a config file. Add a comment explicitly documenting that these values must remain compile-time constants, or switch to a whitelist validation.</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">3.1.2</span>
+      <span class="finding-title">Unused platform parameter implies missing per-platform tracking</span>
+      <span class="file-tag">AnalyticsRepository.cs ~257-278</span>
+    </div>
+    <p><code>IncrementFollows(long sessionId, string platform)</code> and <code>IncrementSubs()</code> accept a <code>platform</code> parameter but the SQL ignores it and increments the combined column. The API implies per-platform tracking that does not exist. Either implement it (per CLAUDE.md Rule 17 — both platforms must be tracked separately) or remove the parameter.</p>
+  </div>
+
+  <div class="section-label">3.2 — Performance</div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">3.2.1</span>
+      <span class="finding-title">3 database round-trips in GetAllTimeStats() instead of 1</span>
+      <span class="file-tag">AnalyticsRepository.cs ~384-407</span>
+    </div>
+    <p><code>GetAllTimeStats()</code> makes three separate queries: main stats + <code>GetPlatformFollows()</code> + <code>GetPlatformSubs()</code>. A single <code>SELECT platform, SUM(total_follows), SUM(total_subs) FROM stream_sessions GROUP BY platform</code> returns all data in one round-trip.</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">3.2.2</span>
+      <span class="finding-title">IncrementFollows / IncrementSubs lack transaction protection</span>
+      <span class="file-tag">AnalyticsRepository.cs ~257-278</span>
+    </div>
+    <p><code>AddSnapshot()</code> correctly uses <code>BeginTransaction()</code>, but these two increment methods do not. Under a sub bomb or rapid follow events, concurrent calls can interleave inconsistently. Wrap in a transaction or consolidate into the snapshot write.</p>
+  </div>
+
+  <!-- PART 4 -->
+  <h2 id="part4">Part 4 — OBS Plugin (C++)</h2>
+
+  <div class="section-label">4.1 — Critical Correctness</div>
+
+  <div class="finding red">
+    <div class="finding-header">
+      <span class="sev">🔴</span>
+      <span class="finding-id">4.1.1</span>
+      <span class="finding-title">Off-by-one buffer overread in emoji_rain_trigger</span>
+      <span class="file-tag">emoji_rain_source.cpp ~330</span>
+    </div>
+    <p>When <code>payload.size() == 7 + slen</code>, the bounds check passes but the subsequent array access reads one byte past the end of the vector — undefined behavior, potential crash or information disclosure.</p>
+    <pre>// CURRENT (wrong):
+if ((size_t)(7 + slen) > payload.size()) return;
+uint8_t count = payload[7 + slen];  // OOB when 7+slen == payload.size()
+
+// CORRECT:
+if ((size_t)(7 + slen) >= payload.size()) return;</pre>
+  </div>
+
+  <div class="section-label">4.2 — Performance / Memory</div>
+
+  <div class="finding orange">
+    <div class="finding-header">
+      <span class="sev">🟠</span>
+      <span class="finding-id">4.2.1</span>
+      <span class="finding-title">GPU texture destroyed and recreated every render frame</span>
+      <span class="file-tag">alert_source.cpp ~313-322</span>
+    </div>
+    <p>The render function calls <code>gs_texture_destroy(d->texture)</code> then <code>gs_texture_create(...)</code> every frame unconditionally. This causes GPU memory thrashing. The texture should be cached and only recreated when the frame dimensions change.</p>
+  </div>
+
+  <div class="finding yellow">
+    <div class="finding-header">
+      <span class="sev">🟡</span>
+      <span class="finding-id">4.2.2</span>
+      <span class="finding-title">Per-frame std::vector heap allocation in render loop</span>
+      <span class="file-tag">chat_source.cpp ~643-656</span>
+    </div>
+    <p><code>std::vector&lt;uint8_t&gt; pixels</code> is stack-declared (heap-allocated via the vector) fresh every frame. The correct pattern is demonstrated elsewhere in the codebase (<code>alert_source.cpp</code> uses a member <code>mixBuffer</code> that is resized grow-only and reused). Apply the same pattern here.</p>
+  </div>
+
+  <!-- SUMMARY TABLE -->
+  <h2 id="summary">Full Summary Table</h2>
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Sev</th>
+        <th>Area</th>
+        <th>Issue</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1.1.1</td><td class="sev-cell">🔴</td><td>Core</td><td>ChatbotService — text[1..space] when space==-1 silently produces empty string</td></tr>
+      <tr><td>4.1.1</td><td class="sev-cell">🔴</td><td>OBS C++</td><td>emoji_rain_trigger — off-by-one buffer overread (> should be >=)</td></tr>
+      <tr><td>1.1.2</td><td class="sev-cell">🟠</td><td>Core</td><td>TwitchEventSubClient — fire-and-forget async drops events on shutdown</td></tr>
+      <tr><td>1.1.3</td><td class="sev-cell">🟠</td><td>Core</td><td>ObsWebSocketService — TOCTOU race on state check before ReceiveAsync</td></tr>
+      <tr><td>1.3.1</td><td class="sev-cell">🟠</td><td>Core</td><td>OverlayDispatcher — EmoteCache static event never unsubscribed</td></tr>
+      <tr><td>1.3.2</td><td class="sev-cell">🟠</td><td>Core</td><td>SoundDispatcher / ViewerListService — EventBus handlers accumulate across Start/Stop</td></tr>
+      <tr><td>1.5.1</td><td class="sev-cell">🟠</td><td>Core</td><td>ChatbotService — timer tick race can send duplicate messages</td></tr>
+      <tr><td>2.1.1</td><td class="sev-cell">🟠</td><td>WinUI</td><td>AnalyticsPage — background task uses disposed _repo after navigation</td></tr>
+      <tr><td>2.4.1</td><td class="sev-cell">🟠</td><td>WinUI</td><td>OverlaysPage — GIF frame cache unbounded; multiple large GIFs can OOM</td></tr>
+      <tr><td>2.5.1</td><td class="sev-cell">🟠</td><td>WinUI</td><td>OverlaysPage / AlertEditorPage — new RotateTransform allocated every animation frame</td></tr>
+      <tr><td>4.2.1</td><td class="sev-cell">🟠</td><td>OBS C++</td><td>alert_source — GPU texture destroyed and recreated every frame</td></tr>
+      <tr><td>1.1.4</td><td class="sev-cell">🟡</td><td>Core</td><td>OverlayDispatcher — emoji color encoding unvalidated</td></tr>
+      <tr><td>1.2.1</td><td class="sev-cell">🟡</td><td>Core</td><td>StreamDataService — dead TwitchReq() method</td></tr>
+      <tr><td>1.2.2</td><td class="sev-cell">🟡</td><td>Core</td><td>Duplicate JSON helpers across RemoteKickBridgeClient and KickAdapter</td></tr>
+      <tr><td>1.2.3</td><td class="sev-cell">🟡</td><td>Core</td><td>RemoteKickBridgeClient — unused Platform assignment</td></tr>
+      <tr><td>1.3.3</td><td class="sev-cell">🟡</td><td>Core</td><td>ViewerListService — timer handler not removed before Stop()</td></tr>
+      <tr><td>1.4.1</td><td class="sev-cell">🟡</td><td>Core</td><td>ChatbotService — uncompiled Regex + double count() in hot path</td></tr>
+      <tr><td>1.4.2</td><td class="sev-cell">🟡</td><td>Core</td><td>StreamDataService — Twitch follower API polled unconditionally every 30 s</td></tr>
+      <tr><td>1.4.3</td><td class="sev-cell">🟡</td><td>Core</td><td>OverlayDispatcher — all 11 label objects rebuilt on every update</td></tr>
+      <tr><td>1.5.2</td><td class="sev-cell">🟡</td><td>Core</td><td>ViewModelBase.Set() — no thread-safety guard</td></tr>
+      <tr><td>2.2.1</td><td class="sev-cell">🟡</td><td>WinUI</td><td>Empty LabelList_SelectionChanged handlers wired in XAML (2 pages)</td></tr>
+      <tr><td>2.3.1</td><td class="sev-cell">🟡</td><td>WinUI</td><td>OverlaysPage — goal CRUD logic in code-behind (MVVM violation)</td></tr>
+      <tr><td>2.3.2</td><td class="sev-cell">🟡</td><td>WinUI</td><td>ChatPage — preview rendering logic in code-behind</td></tr>
+      <tr><td>2.5.2</td><td class="sev-cell">🟡</td><td>WinUI</td><td>OverlaysPage — synchronous GIF load blocks UI thread</td></tr>
+      <tr><td>2.5.3</td><td class="sev-cell">🟡</td><td>WinUI</td><td>DashboardPage — ScrollIntoView on every chat message</td></tr>
+      <tr><td>3.1.1</td><td class="sev-cell">🟡</td><td>Data</td><td>AnalyticsRepository — DDL migration uses string interpolation (landmine pattern)</td></tr>
+      <tr><td>3.1.2</td><td class="sev-cell">🟡</td><td>Data</td><td>IncrementFollows/Subs — unused platform param; per-platform tracking missing</td></tr>
+      <tr><td>3.2.1</td><td class="sev-cell">🟡</td><td>Data</td><td>GetAllTimeStats() — 3 DB round-trips instead of 1</td></tr>
+      <tr><td>3.2.2</td><td class="sev-cell">🟡</td><td>Data</td><td>IncrementFollows/Subs — no transaction; interleaving risk under sub bombs</td></tr>
+      <tr><td>4.2.2</td><td class="sev-cell">🟡</td><td>OBS C++</td><td>chat_source — per-frame std::vector allocation in render loop</td></tr>
+      <tr><td>1.6.x</td><td class="sev-cell">🟢</td><td>Core</td><td>Duplicate HTTP headers; repeated null-coalescing; bare catch blocks; JSON source-gen opportunity</td></tr>
+      <tr><td>2.6.x</td><td class="sev-cell">🟢</td><td>WinUI</td><td>Duplicate color parsing, GIF loading, text grid, status bar across pages</td></tr>
+    </tbody>
+  </table>
+
+  <!-- PRIORITIES -->
+  <h2 id="priorities">Top Priorities</h2>
+
+  <div class="priority-block p1">
+    <h4>Priority 1 — Fix Immediately (correctness / safety)</h4>
+    <ul>
+      <li><strong>4.1.1</strong> — <code>emoji_rain_source.cpp</code>: change <code>&gt;</code> to <code>&gt;=</code> in bounds check. One character change, undefined behavior.</li>
+      <li><strong>1.1.1</strong> — <code>ChatbotService.cs</code>: fix <code>text[1..space]</code> when <code>space == -1</code>. Single-word commands silently broken.</li>
+    </ul>
+  </div>
+
+  <div class="priority-block p2">
+    <h4>Priority 2 — Fix Soon (resource leaks / crash risk)</h4>
+    <ul>
+      <li><strong>1.3.1</strong> — Unsubscribe from <code>EmoteCache.Instance</code> in <code>OverlayDispatcher.Dispose()</code></li>
+      <li><strong>1.3.2</strong> — Unsubscribe EventBus handlers in <code>SoundDispatcher.Stop()</code> and <code>ViewerListService.Stop()</code></li>
+      <li><strong>2.1.1</strong> — <code>AnalyticsPage</code>: null-check <code>_repo</code> inside the background lambda before calling <code>GetSnapshots()</code></li>
+      <li><strong>3.1.2</strong> — Either implement per-platform follow/sub tracking or remove the dead <code>platform</code> parameter (Rule 17)</li>
+    </ul>
+  </div>
+
+  <div class="priority-block p3">
+    <h4>Priority 3 — Fix for Performance (especially streaming use)</h4>
+    <ul>
+      <li><strong>2.5.1</strong> — Cache and mutate <code>RotateTransform</code> instead of <code>new</code> every frame (both pages)</li>
+      <li><strong>4.2.1</strong> — Cache GPU texture in <code>alert_source.cpp</code>; only recreate on resize</li>
+      <li><strong>4.2.2</strong> — Move pixel vector to a member field in <code>chat_source.cpp</code> (grow-only reuse pattern)</li>
+      <li><strong>1.4.1</strong> — Pre-compile the <code>Regex</code> as a static field in <code>ChatbotService</code></li>
+      <li><strong>2.4.1</strong> — Add LRU size cap to GIF frame cache in <code>OverlaysPage</code></li>
+    </ul>
+  </div>
+
+  <div class="priority-block p4">
+    <h4>Priority 4 — Easy Refactors (low risk, good payoff)</h4>
+    <ul>
+      <li><strong>2.6.3</strong> — Extract <code>GifFrameLoader</code> utility (eliminates duplication and makes LRU fix a one-time change)</li>
+      <li><strong>2.6.2</strong> — Extract <code>WinUIColorHelpers</code> static class</li>
+      <li><strong>3.2.1</strong> — Consolidate <code>GetPlatformFollows()</code> + <code>GetPlatformSubs()</code> into one query</li>
+      <li><strong>2.2.1</strong> — Delete the two empty <code>LabelList_SelectionChanged</code> handlers and their XAML attributes</li>
+      <li><strong>1.6.3</strong> — Replace bare <code>catch { }</code> with <code>catch (Exception ex) { DebugLog(ex.Message); }</code></li>
+      <li><strong>1.2.1</strong> — Delete dead <code>TwitchReq()</code> method from <code>StreamDataService</code></li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>

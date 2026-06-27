@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>Steaming.WinUI</RootNamespace>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="app.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.2.251219" />
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.WinUI" Version="2.0.4" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260508005" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3967.48" />
+    <PackageReference Include="WinUI.Dock" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Steaming.Application\Steaming.Application.csproj" />
+    <ProjectReference Include="..\Steaming.Core\Steaming.Core.csproj" />
+    <ProjectReference Include="..\Steaming.Data\Steaming.Data.csproj" />
+  </ItemGroup>
+
+  <!--
+    The WinUI XAML compiler needs Microsoft.UI.Xaml.winmd in its reference search paths to resolve
+    types in http://schemas.microsoft.com/windows/2010/xaml/presentation. For .NET SDK-style
+    projects, the traditional ImplicitlyExpandTargetFramework target does not run so ReferenceAssemblyPaths
+    stays empty. This target injects the WinUI metadata folder before XAML compilation begins.
+  -->
+  <Target Name="AddWinUIMetadataToXamlRefs" BeforeTargets="Prep_ComputeProcessXamlFiles">
+    <ItemGroup>
+      <ReferenceAssemblyPaths Include="$(NuGetPackageRoot)microsoft.windowsappsdk.winui\1.8.260508005\metadata\" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Copy WinUI output to the WPF app's bin directory so the splash screen can find Steaming.WinUI.exe.
+    This runs after every build so both Debug and Release outputs stay in sync.
+  -->
+  <Target Name="CopyToWpfBin" AfterTargets="Build">
+    <PropertyGroup>
+      <WpfBinDir>$(MSBuildThisFileDirectory)..\Steaming.App\bin\$(Configuration)\net8.0-windows10.0.19041.0\</WpfBinDir>
+      <WinUIBinDir>$(MSBuildThisFileDirectory)..\Steaming.App\bin\$(Configuration)\net8.0-windows10.0.19041.0\</WinUIBinDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <WinUIOutputFiles Include="$(OutputPath)**\*.*" />
+    </ItemGroup>
+    <MakeDir Directories="$(WpfBinDir)" />
+    <Copy SourceFiles="@(WinUIOutputFiles)" DestinationFiles="@(WinUIOutputFiles->'$(WpfBinDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" ContinueOnError="true" />
+  </Target>
+
+</Project>

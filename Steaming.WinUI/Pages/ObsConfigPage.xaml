@@ -1,0 +1,89 @@
+<Page
+    x:Class="Steaming.WinUI.Pages.ObsConfigPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    RequestedTheme="Dark">
+
+    <ScrollViewer Padding="24">
+        <StackPanel Spacing="16" MaxWidth="680">
+
+            <!-- OBS Plugin -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="OBS Plugin (Overlay Rendering)" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock TextWrapping="Wrap" FontSize="13"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               Text="The Streaming plugin renders alert and chat overlays natively in OBS — no browser source needed. Uses ~2 MB vs ~200 MB for a browser overlay."/>
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Ellipse x:Name="PipeDot" Width="10" Height="10"/>
+                        <TextBlock x:Name="PipeStatusText" VerticalAlignment="Center" FontSize="13"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                    <TextBlock FontSize="11"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               Text="Plugin path: C:\ProgramData\obs-studio\plugins\steaming-plugin\"/>
+                </StackPanel>
+            </Border>
+
+            <!-- OBS WebSocket -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="OBS WebSocket (Scene Control)" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock TextWrapping="Wrap" FontSize="13"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               Text="Enable in OBS → Tools → WebSocket Server Settings. Used for scene switching."/>
+                    <TextBlock Text="Address" FontSize="12"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBox x:Name="ObsAddressBox" PlaceholderText="ws://localhost:4455"/>
+                    <TextBlock Text="Password" FontSize="12"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <PasswordBox x:Name="ObsPasswordBox"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Connect" Click="ObsConnect_Click"/>
+                        <Button Content="Disconnect" Click="ObsDisconnect_Click"/>
+                    </StackPanel>
+                    <CheckBox x:Name="AutoReconnectCheck"
+                              Content="Connect to OBS on startup and automatically reconnect if the connection drops"
+                              Checked="AutoReconnect_Toggled" Unchecked="AutoReconnect_Toggled"/>
+                    <TextBlock x:Name="ObsStatusText" FontSize="12"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Ellipse x:Name="StreamDot" Width="10" Height="10"/>
+                        <TextBlock x:Name="StreamStatusText" VerticalAlignment="Center" FontSize="13"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Stream health warnings -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Stream Health Warnings" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock TextWrapping="Wrap" FontSize="13"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               Text="Warn when OBS is streaming but a platform isn't showing live, or when that platform's event hooks/auth fail (a token may need a full re-login). Set per destination — leave one off if you don't stream to it."/>
+                    <CheckBox x:Name="WarnTwitchCheck" Content="Warn me about Twitch health"
+                              Checked="WarnTwitch_Toggled" Unchecked="WarnTwitch_Toggled"/>
+                    <CheckBox x:Name="WarnKickCheck" Content="Warn me about Kick health"
+                              Checked="WarnKick_Toggled" Unchecked="WarnKick_Toggled"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Scene switcher -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Scene Switcher" FontSize="16" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="ScenePicker" PlaceholderText="Select scene…"
+                              MinWidth="300" HorizontalAlignment="Left"/>
+                    <Button Content="Switch to Scene" Click="SwitchScene_Click"
+                            HorizontalAlignment="Left"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

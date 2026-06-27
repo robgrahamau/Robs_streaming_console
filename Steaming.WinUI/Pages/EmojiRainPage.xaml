@@ -1,0 +1,115 @@
+<Page
+    x:Class="Steaming.WinUI.Pages.EmojiRainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    RequestedTheme="Dark">
+
+    <ScrollViewer Padding="24">
+        <StackPanel Spacing="16" MaxWidth="680">
+
+            <TextBlock Text="Emoji Rain" FontSize="20" FontWeight="SemiBold"/>
+            <TextBlock FontSize="13" TextWrapping="Wrap"
+                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                       Text="Add a steaming_emoji_rain source in OBS. Emojis rain down when events fire. Pick emoji text for each trigger and configure particle settings."/>
+
+            <!-- Triggers -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="TRIGGERS" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+
+                    <!-- Follow -->
+                    <Grid ColumnDefinitions="120,*,80,80" ColumnSpacing="8">
+                        <CheckBox x:Name="ErOnFollow" Grid.Column="0" Content="On Follow" VerticalAlignment="Center"/>
+                        <TextBox  x:Name="ErFollowEmoji" Grid.Column="1" PlaceholderText="Emoji(s) to rain"/>
+                        <TextBox  x:Name="ErFollowGif" Grid.Column="2" PlaceholderText="GIF" IsReadOnly="True" FontSize="11"/>
+                        <Button   Grid.Column="3" Content="▶ Test" Click="TestFollow_Click"/>
+                    </Grid>
+
+                    <!-- Subscribe -->
+                    <Grid ColumnDefinitions="120,*,80,80" ColumnSpacing="8">
+                        <CheckBox x:Name="ErOnSubscribe" Grid.Column="0" Content="On Subscribe" VerticalAlignment="Center"/>
+                        <TextBox  x:Name="ErSubscribeEmoji" Grid.Column="1" PlaceholderText="Emoji(s) to rain"/>
+                        <TextBox  x:Name="ErSubscribeGif" Grid.Column="2" PlaceholderText="GIF" IsReadOnly="True" FontSize="11"/>
+                        <Button   Grid.Column="3" Content="▶ Test" Click="TestSubscribe_Click"/>
+                    </Grid>
+
+                    <!-- Bits -->
+                    <Grid ColumnDefinitions="120,*,80,80" ColumnSpacing="8">
+                        <CheckBox x:Name="ErOnBits" Grid.Column="0" Content="On Bits" VerticalAlignment="Center"/>
+                        <TextBox  x:Name="ErBitsEmoji" Grid.Column="1" PlaceholderText="Emoji(s) to rain"/>
+                        <TextBox  x:Name="ErBitsGif" Grid.Column="2" PlaceholderText="GIF" IsReadOnly="True" FontSize="11"/>
+                        <Button   Grid.Column="3" Content="▶ Test" Click="TestBits_Click"/>
+                    </Grid>
+
+                    <!-- Raid -->
+                    <Grid ColumnDefinitions="120,*,80,80" ColumnSpacing="8">
+                        <CheckBox x:Name="ErOnRaid" Grid.Column="0" Content="On Raid" VerticalAlignment="Center"/>
+                        <TextBox  x:Name="ErRaidEmoji" Grid.Column="1" PlaceholderText="Emoji(s) to rain"/>
+                        <TextBox  x:Name="ErRaidGif" Grid.Column="2" PlaceholderText="GIF" IsReadOnly="True" FontSize="11"/>
+                        <Button   Grid.Column="3" Content="▶ Test" Click="TestRaid_Click"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Particle settings -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="PARTICLE SETTINGS" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="20" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+                        <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Emoji Size (px)" FontSize="12"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            <TextBox x:Name="ErSize"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4">
+                            <TextBlock Text="Fall Speed (px/s)" FontSize="12"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            <TextBox x:Name="ErSpeed"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Particle Life (sec)" FontSize="12"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            <TextBox x:Name="ErLife"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+                            <TextBlock Text="Max Particles" FontSize="12"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            <TextBox x:Name="ErMax"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Count Per Trigger" FontSize="12"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            <TextBox x:Name="ErCount"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4">
+                            <TextBlock Text="Spread (0–100)" FontSize="12"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            <TextBox x:Name="ErSpread"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                                    Orientation="Horizontal" Spacing="20">
+                            <CheckBox x:Name="ErFadeOut" Content="Fade out"/>
+                            <CheckBox x:Name="ErSpin"    Content="Spin"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Actions -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Button Content="Save Settings" Click="Save_Click"/>
+                    <Button Content="▶ Test OBS" Click="TestAll_Click"/>
+                    <TextBlock x:Name="SaveStatus" FontSize="12" VerticalAlignment="Center"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -1,0 +1,87 @@
+<Page
+    x:Class="Steaming.WinUI.Pages.AboutPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    RequestedTheme="Dark">
+
+    <ScrollViewer Padding="24">
+        <StackPanel Spacing="18" MaxWidth="860">
+
+            <!-- Title -->
+            <StackPanel Spacing="2">
+                <TextBlock Text="Rob's Streaming Console" FontSize="24" FontWeight="SemiBold"/>
+                <TextBlock x:Name="VersionLine" FontSize="13"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+            </StackPanel>
+
+            <!-- What it is -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="About" FontSize="18" FontWeight="SemiBold"/>
+                <TextBlock TextWrapping="Wrap" FontSize="14" LineHeight="22">
+                    Rob's Streaming Console is an all-in-one streaming control surface for going live on
+                    Twitch and Kick at the same time. It manages your stream metadata, chat, chatbot,
+                    viewer and analytics tracking, alerts, overlays, emoji rain, music and an animated
+                    avatar from a single window.
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" FontSize="14" LineHeight="22">
+                    Rather than relying on browser sources, the console integrates directly with OBS Studio
+                    through a native C++ plugin. The app renders overlay frames with GDI and streams them to
+                    the plugin over a local named pipe, so alerts and overlays are drawn straight into your
+                    scene by OBS itself. The same plugin reports live OBS state (streaming status, scene info)
+                    back to the console for the runtime health indicators.
+                </TextBlock>
+            </StackPanel>
+
+            <!-- Source & support -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Source &amp; support" FontSize="18" FontWeight="SemiBold"/>
+                <TextBlock TextWrapping="Wrap" FontSize="14" LineHeight="22">
+                    A link to the source files for this project can be found at
+                    <Hyperlink NavigateUri="https://robgraham.info">robgraham.info</Hyperlink>.
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" FontSize="14" LineHeight="22">
+                    If you run into a problem or have a request, please report it at
+                    <Hyperlink NavigateUri="https://robgraham.info">robgraham.info</Hyperlink>
+                    or on the project's GitHub repository.
+                </TextBlock>
+            </StackPanel>
+
+            <!-- Open source acknowledgements -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Open source acknowledgements" FontSize="18" FontWeight="SemiBold"/>
+                <TextBlock TextWrapping="Wrap" FontSize="13"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                    This application is built on the following open source projects and components. Each
+                    remains the property of its respective authors and is used under the license shown.
+                </TextBlock>
+
+                <ItemsControl x:Name="LicenseList" Margin="0,4,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                                    CornerRadius="8" Padding="14,10" Margin="0,0,0,8">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                    <StackPanel Grid.Column="0" Spacing="2">
+                                        <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Note}" FontSize="12" TextWrapping="Wrap"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#14FFFFFF"
+                                            BorderBrush="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                            BorderThickness="1" CornerRadius="10" Padding="8,2"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding License}" FontSize="11" FontWeight="SemiBold"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <TextBlock Text="© Rob Graham" FontSize="12" Margin="0,4,0,0"
+                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

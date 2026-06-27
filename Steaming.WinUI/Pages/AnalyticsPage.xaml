@@ -1,0 +1,231 @@
+<Page
+    x:Class="Steaming.WinUI.Pages.AnalyticsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:lvc="using:LiveChartsCore.SkiaSharpView.WinUI"
+    RequestedTheme="Dark">
+
+    <ScrollViewer>
+        <StackPanel Margin="16" Spacing="12">
+
+            <!-- All-time stats ribbon -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="16">
+                <StackPanel Orientation="Horizontal" Spacing="32">
+                    <StackPanel>
+                        <TextBlock x:Name="TotalStreamsLabel" Text="0" FontSize="22" FontWeight="Bold"/>
+                        <TextBlock Text="STREAMS" FontSize="10"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock x:Name="TotalTimeLabel" Text="0h" FontSize="22" FontWeight="Bold"/>
+                        <TextBlock Text="STREAM TIME" FontSize="10"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock x:Name="TotalFollowsLabel" Text="0" FontSize="22" FontWeight="Bold"/>
+                        <TextBlock Text="FOLLOWS" FontSize="10"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock x:Name="TotalSubsLabel" Text="0" FontSize="22" FontWeight="Bold"/>
+                        <TextBlock Text="SUBS" FontSize="10"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock x:Name="PeakViewersLabel" Text="0" FontSize="22" FontWeight="Bold"/>
+                        <TextBlock Text="PEAK VIEWERS" FontSize="10"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock x:Name="AvgViewersLabel" Text="—" FontSize="22" FontWeight="Bold"/>
+                        <TextBlock Text="AVG VIEWERS" FontSize="10"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Date range row -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="12,10">
+                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto">
+                    <!-- Quick presets -->
+                    <TextBlock Grid.Column="0" Text="Period:" VerticalAlignment="Center" FontSize="12"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               Margin="0,0,10,0"/>
+                    <Button Grid.Column="1" x:Name="Preset7d"  Content="Last 7 days"  Click="Preset_Click" Tag="7"  Margin="0,0,6,0"/>
+                    <Button Grid.Column="2" x:Name="Preset30d" Content="Last 30 days" Click="Preset_Click" Tag="30" Margin="0,0,6,0"/>
+                    <Button Grid.Column="3" x:Name="Preset90d" Content="Last 90 days" Click="Preset_Click" Tag="90" Margin="0,0,6,0"/>
+                    <Button Grid.Column="4" x:Name="PresetAll" Content="All time"     Click="Preset_Click" Tag="0"  Margin="0,0,0,0"/>
+                    <!-- Custom date range on the right -->
+                    <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock Text="From:" VerticalAlignment="Center" FontSize="12"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <CalendarDatePicker x:Name="DateFrom" PlaceholderText="Start date"
+                                            DateChanged="DateRange_Changed"/>
+                        <TextBlock Text="To:" VerticalAlignment="Center" FontSize="12"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <CalendarDatePicker x:Name="DateTo" PlaceholderText="End date"
+                                            DateChanged="DateRange_Changed"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Filter + overview metric picker -->
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <ComboBox Grid.Column="0" x:Name="PlatformFilter" SelectedIndex="0" MinWidth="150"
+                          SelectionChanged="PlatformFilter_Changed">
+                    <ComboBoxItem Content="All Platforms"/>
+                    <ComboBoxItem Content="Twitch"/>
+                    <ComboBoxItem Content="Kick"/>
+                    <ComboBoxItem Content="YouTube"/>
+                    <ComboBoxItem Content="Twitch + Kick"/>
+                    <ComboBoxItem Content="Twitch + YouTube"/>
+                    <ComboBoxItem Content="Kick + YouTube"/>
+                </ComboBox>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Show Me:" VerticalAlignment="Center" FontSize="12"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <ComboBox x:Name="TrendMetricPicker" MinWidth="160" SelectedIndex="0"
+                              SelectionChanged="TrendMetric_Changed">
+                        <ComboBoxItem Content="Average Viewers"/>
+                        <ComboBoxItem Content="Peak Viewers"/>
+                        <ComboBoxItem Content="Follows"/>
+                        <ComboBoxItem Content="Subs"/>
+                        <ComboBoxItem Content="Unique Chatters"/>
+                        <ComboBoxItem Content="Duration (min)"/>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
+            <!-- Overview chart -->
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="8" Height="220">
+                <lvc:CartesianChart x:Name="TrendChart"/>
+            </Border>
+
+            <!-- Session list + detail side by side -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" MinHeight="420">
+
+                <!-- Left: session list -->
+                <Border Grid.Column="0"
+                        Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8">
+                    <ListView x:Name="SessionList" SelectionMode="Single"
+                              SelectionChanged="SessionList_SelectionChanged">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="110,50,60,60,60,50,40,*" ColumnSpacing="6">
+                                    <TextBlock Grid.Column="0" Text="{Binding Date}" FontSize="11"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Platform}" FontSize="11"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Duration}" FontSize="11"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding PeakViewers}" FontSize="11" TextAlignment="Right"/>
+                                    <TextBlock Grid.Column="4" Text="{Binding AvgViewers}" FontSize="11" TextAlignment="Right"/>
+                                    <TextBlock Grid.Column="5" Text="{Binding Follows}" FontSize="11" TextAlignment="Right"/>
+                                    <TextBlock Grid.Column="6" Text="{Binding Subs}" FontSize="11" TextAlignment="Right"/>
+                                    <TextBlock Grid.Column="7" Text="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                        <ListView.Header>
+                            <Grid ColumnDefinitions="110,50,60,60,60,50,40,*" ColumnSpacing="6"
+                                  Padding="12,6"
+                                  Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
+                                <TextBlock Grid.Column="0" Text="Date" FontSize="10" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="1" Text="Platf." FontSize="10" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="2" Text="Duration" FontSize="10" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="3" Text="Peak" FontSize="10" FontWeight="SemiBold" TextAlignment="Right"/>
+                                <TextBlock Grid.Column="4" Text="Avg" FontSize="10" FontWeight="SemiBold" TextAlignment="Right"/>
+                                <TextBlock Grid.Column="5" Text="Follows" FontSize="10" FontWeight="SemiBold" TextAlignment="Right"/>
+                                <TextBlock Grid.Column="6" Text="Subs" FontSize="10" FontWeight="SemiBold" TextAlignment="Right"/>
+                                <TextBlock Grid.Column="7" Text="Title" FontSize="10" FontWeight="SemiBold"/>
+                            </Grid>
+                        </ListView.Header>
+                    </ListView>
+                </Border>
+
+                <!-- Right: session detail — always visible -->
+                <Border Grid.Column="1"
+                        Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8" Padding="16">
+                    <StackPanel Spacing="12">
+
+                        <!-- Placeholder when no session selected -->
+                        <TextBlock x:Name="SessionPlaceholder"
+                                   Text="← Select a session to view its breakdown"
+                                   FontSize="13" HorizontalAlignment="Center"
+                                   Padding="0,80,0,0"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+
+                        <!-- Detail content -->
+                        <StackPanel x:Name="SessionDetailPanel" Visibility="Collapsed" Spacing="12">
+
+                            <TextBlock x:Name="ViewerChartTitle" FontSize="11"
+                                       TextWrapping="Wrap"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+
+                            <!-- Stat cards: 3 per row -->
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                <Border Grid.Column="0" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="6" Padding="10,8">
+                                    <StackPanel>
+                                        <TextBlock x:Name="StatDuration" FontSize="18" FontWeight="Bold"/>
+                                        <TextBlock Text="DURATION" FontSize="9" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="1" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="6" Padding="10,8">
+                                    <StackPanel>
+                                        <TextBlock x:Name="StatAvgViewers" FontSize="18" FontWeight="Bold"/>
+                                        <TextBlock Text="AVG VIEWERS" FontSize="9" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="6" Padding="10,8">
+                                    <StackPanel>
+                                        <TextBlock x:Name="StatPeakViewers" FontSize="18" FontWeight="Bold"/>
+                                        <TextBlock Text="PEAK VIEWERS" FontSize="9" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                <Border Grid.Column="0" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="6" Padding="10,8">
+                                    <StackPanel>
+                                        <TextBlock x:Name="StatChatters" FontSize="18" FontWeight="Bold"/>
+                                        <TextBlock Text="CHATTERS" FontSize="9" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="1" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="6" Padding="10,8">
+                                    <StackPanel>
+                                        <TextBlock x:Name="StatFollows" FontSize="18" FontWeight="Bold"/>
+                                        <TextBlock Text="FOLLOWS" FontSize="9" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="6" Padding="10,8">
+                                    <StackPanel>
+                                        <TextBlock x:Name="StatSubs" FontSize="18" FontWeight="Bold"/>
+                                        <TextBlock Text="SUBS" FontSize="9" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- Show Me + chart -->
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Show Me:" VerticalAlignment="Center" FontSize="12"
+                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    <ComboBox x:Name="SessionMetricPicker" MinWidth="140" SelectedIndex="0"
+                                              SelectionChanged="SessionMetric_Changed">
+                                        <ComboBoxItem Content="Average Viewers"/>
+                                        <ComboBoxItem Content="Chat Messages"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+                            <lvc:CartesianChart x:Name="ViewerChart" Height="180"/>
+
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </Grid>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

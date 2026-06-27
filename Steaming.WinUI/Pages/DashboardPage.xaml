@@ -1,0 +1,302 @@
+<Page
+    x:Class="Steaming.WinUI.Pages.DashboardPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="using:Steaming.WinUI.Converters"
+    RequestedTheme="Dark">
+
+    <Page.Resources>
+        <conv:PathToImageConverter x:Key="PathToImage"/>
+    </Page.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Stats ribbon -->
+        <Border Grid.Row="0"
+                Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="0,0,0,1" Padding="16,10">
+            <StackPanel Orientation="Horizontal" Spacing="28">
+                <StackPanel>
+                    <TextBlock x:Name="ViewerCountLabel" Text="0" FontSize="22" FontWeight="Bold"/>
+                    <TextBlock x:Name="ViewerBreakdownLabel" FontSize="10"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                        <Run Text="Twitch: " Foreground="#FF9146FF"/>
+                        <Run x:Name="ViewerTwitchRun" Text="0"/>
+                        <Run Text="   "/>
+                        <Run Text="Kick: " Foreground="#FF53FC18"/>
+                        <Run x:Name="ViewerKickRun" Text="0"/>
+                        <Run Text="   "/>
+                        <Run Text="YouTube: " Foreground="#FFFF0000"/>
+                        <Run x:Name="ViewerYouTubeRun" Text="0"/>
+                    </TextBlock>
+                    <TextBlock Text="VIEWERS" FontSize="10"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock x:Name="FollowerCountLabel" Text="0" FontSize="22" FontWeight="Bold"/>
+                    <TextBlock x:Name="FollowerBreakdownLabel" FontSize="10"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                        <Run Text="Twitch: " Foreground="#FF9146FF"/>
+                        <Run x:Name="FollowerTwitchRun" Text="0"/>
+                        <Run Text="   "/>
+                        <Run Text="Kick: " Foreground="#FF53FC18"/>
+                        <Run x:Name="FollowerKickRun" Text="0"/>
+                    </TextBlock>
+                    <TextBlock Text="FOLLOWERS" FontSize="10"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock x:Name="SubCountLabel" Text="0" FontSize="22" FontWeight="Bold"/>
+                    <TextBlock x:Name="SubBreakdownLabel" FontSize="10"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                        <Run Text="Twitch: " Foreground="#FF9146FF"/>
+                        <Run x:Name="SubTwitchRun" Text="0"/>
+                        <Run Text="   "/>
+                        <Run Text="Kick: " Foreground="#FF53FC18"/>
+                        <Run x:Name="SubKickRun" Text="0"/>
+                    </TextBlock>
+                    <TextBlock Text="SUBS" FontSize="10"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock x:Name="UptimeLabel" Text="—" FontSize="22" FontWeight="Bold"/>
+                    <TextBlock Text="UPTIME" FontSize="10"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+                <StackPanel VerticalAlignment="Center" Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Ellipse x:Name="LiveDot" Width="10" Height="10"/>
+                        <TextBlock x:Name="LiveLabel" Text="OFFLINE" FontSize="13" FontWeight="Bold"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock x:Name="StreamTitleLabel" Text="—" FontSize="11" MaxWidth="280"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Main content: chat | right panel -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,300">
+
+            <!-- Chat feed -->
+            <Border Grid.Column="0"
+                    BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="0,0,1,0">
+                <!-- Plain-text chat view: the dashboard chat is plain text, so a virtualizing
+                     ListView (which re-realized/relaid-out on every ScrollIntoView) is overkill and
+                     caused the full-redraw flicker. A read-only TextBox just appends + scrolls. -->
+                <TextBox x:Name="ChatTextView" Padding="8" IsReadOnly="True" TextWrapping="Wrap"
+                         AcceptsReturn="True" IsSpellCheckEnabled="False" BorderThickness="0"
+                         Background="Transparent" FontSize="13"
+                         ScrollViewer.VerticalScrollBarVisibility="Visible"/>
+            </Border>
+
+            <!-- Right panel: viewers | stream edit | quick actions | avatar | music -->
+            <Grid Grid.Column="1" RowDefinitions="*,Auto,Auto,Auto,Auto">
+
+                <!-- Viewers list -->
+                <Border Grid.Row="0"
+                        BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid RowDefinitions="Auto,*">
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="6"
+                                    Margin="10,8,10,4">
+                            <TextBlock Text="VIEWERS" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock x:Name="ViewerListCount" Text="" FontSize="10"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ListView Grid.Row="1" x:Name="ViewerList" SelectionMode="None" Padding="8,0,8,8">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="6" Padding="0,2">
+                                        <TextBlock Text="{Binding Platform}" FontSize="10" VerticalAlignment="Center"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                        <TextBlock Text="{Binding DisplayName}" FontSize="12"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </Border>
+
+                <!-- Stream quick-edit -->
+                <Border Grid.Row="1" Padding="10,10"
+                        BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="0,0,0,1">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="STREAM" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <TextBox x:Name="StreamTitleInput" PlaceholderText="Stream title…"
+                                 FontSize="12" TextWrapping="Wrap" MaxLength="140"/>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                            <CheckBox Grid.Column="0" x:Name="UpdateTwitchCheck" Content="Twitch"
+                                      FontSize="11" IsChecked="True"/>
+                            <CheckBox Grid.Column="1" x:Name="UpdateKickCheck" Content="Kick"
+                                      FontSize="11" IsChecked="True"/>
+                        </Grid>
+                        <Button x:Name="UpdateTitleBtn" Content="Update Title"
+                                HorizontalAlignment="Stretch" FontSize="12"
+                                Click="UpdateTitle_Click"/>
+                        <TextBlock x:Name="UpdateTitleStatus" FontSize="11" TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                   Visibility="Collapsed"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Quick actions -->
+                <Border Grid.Row="2" Padding="10,8">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="QUICK ACTIONS" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <!-- Streaming-to: per-platform master switches (independent of login). Off = the app
+                             won't poll, show chat/alerts, or send to that platform until turned back on. -->
+                        <TextBlock Text="STREAMING TO" FontSize="10" FontWeight="SemiBold" Margin="0,2,0,0"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="2,0,0,0">
+                            <ToggleSwitch x:Name="TwitchActiveToggle" Tag="Twitch" MinWidth="0"
+                                          OnContent="Twitch" OffContent="Twitch"
+                                          Toggled="PlatformActive_Toggled"/>
+                            <ToggleSwitch x:Name="KickActiveToggle" Tag="Kick" MinWidth="0"
+                                          OnContent="Kick" OffContent="Kick"
+                                          Toggled="PlatformActive_Toggled"/>
+                            <ToggleSwitch x:Name="YouTubeActiveToggle" Tag="YouTube" MinWidth="0"
+                                          OnContent="YouTube" OffContent="YouTube"
+                                          Toggled="PlatformActive_Toggled"/>
+                        </StackPanel>
+                        <ComboBox x:Name="ScenePicker" PlaceholderText="Scene — not connected"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="ScenePicker_Changed"/>
+                        <Button Content="▶  Test Alert" HorizontalAlignment="Stretch"
+                                Click="TestAlert_Click"/>
+                        <StackPanel Orientation="Horizontal" Spacing="10" Margin="2,0,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Ellipse x:Name="TwitchDot" Width="8" Height="8"/>
+                                <TextBlock Text="Twitch" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Ellipse x:Name="KickDot" Width="8" Height="8"/>
+                                <TextBlock Text="Kick" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Ellipse x:Name="YouTubeDot" Width="8" Height="8"/>
+                                <TextBlock Text="YouTube" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Ellipse x:Name="ObsDot" Width="8" Height="8"/>
+                                <TextBlock Text="OBS" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock Text="Warn if unhealthy while streaming:" FontSize="10" Margin="2,4,0,0"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="12" Margin="2,0,0,0">
+                            <CheckBox x:Name="WarnTwitchCheck" Content="Twitch" FontSize="12"
+                                      Checked="WarnTwitch_Toggled" Unchecked="WarnTwitch_Toggled"/>
+                            <CheckBox x:Name="WarnKickCheck" Content="Kick" FontSize="12"
+                                      Checked="WarnKick_Toggled" Unchecked="WarnKick_Toggled"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <!-- Avatar mini-preview -->
+                <Border Grid.Row="3" Padding="10,8"
+                        BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="0,1,0,0">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="AVATAR" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <!-- Small avatar preview image -->
+                            <Border Grid.Column="0" Background="#FF0A0A0A" CornerRadius="4">
+                                <Image x:Name="DashAvatarImage"
+                                       Width="90" Height="160"
+                                       Stretch="UniformToFill"/>
+                            </Border>
+                            <!-- Avatar status info -->
+                            <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <Ellipse x:Name="AvatarDot" Width="8" Height="8" Fill="Gray"/>
+                                    <TextBlock x:Name="AvatarStatusLabel" Text="No model"
+                                               FontSize="11" VerticalAlignment="Center"
+                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                </StackPanel>
+                                <TextBlock x:Name="AvatarExprLabel" Text=""
+                                           FontSize="10" TextWrapping="Wrap"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Mic:" FontSize="10"
+                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    <ProgressBar x:Name="MicLevelBar"
+                                                 Minimum="0" Maximum="1" Value="0"
+                                                 Width="60" Height="4"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Music mini-player -->
+                <Border x:Name="MusicWidget" Grid.Row="4" Padding="10,8"
+                        BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="0,1,0,0">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="MUSIC" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <Grid ColumnDefinitions="40,*" ColumnSpacing="8">
+                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="4"
+                                    Background="#FF0A0A0A">
+                                <Image Source="{Binding ArtPath, Converter={StaticResource PathToImage}}"
+                                       Stretch="UniformToFill"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding Artist}" FontSize="10"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                           TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                            <ToggleButton Content="🔀" FontSize="12" Padding="6,2" ToolTipService.ToolTip="Shuffle"
+                                          IsChecked="{Binding Shuffle, Mode=TwoWay}"/>
+                            <Button Content="⏮" FontSize="12" Padding="6,2" Command="{Binding PreviousCommand}"/>
+                            <Button Content="⏯" FontSize="12" Padding="6,2" Command="{Binding PlayPauseCommand}"/>
+                            <Button Content="⏹" FontSize="12" Padding="6,2" Command="{Binding StopCommand}"/>
+                            <Button Content="⏭" FontSize="12" Padding="6,2" Command="{Binding NextCommand}"/>
+                        </StackPanel>
+                        <Slider Minimum="0" Maximum="1" StepFrequency="0.01"
+                                Value="{Binding Volume, Mode=TwoWay}" ToolTipService.ToolTip="Volume"/>
+                    </StackPanel>
+                </Border>
+
+            </Grid>
+        </Grid>
+
+        <!-- Send bar -->
+        <Border Grid.Row="2"
+                Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="0,1,0,0" Padding="8,6">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <ComboBox Grid.Column="0" x:Name="SendTargetPicker" SelectedIndex="0" MinWidth="90">
+                    <ComboBoxItem Content="All"/>
+                    <ComboBoxItem Content="Twitch"/>
+                    <ComboBoxItem Content="Kick"/>
+                    <ComboBoxItem Content="YouTube"/>
+                </ComboBox>
+                <TextBox Grid.Column="1" x:Name="ChatInput"
+                         PlaceholderText="Send a message..."
+                         KeyDown="ChatInput_KeyDown"/>
+                <Button Grid.Column="2" Content="Send" Click="SendChat_Click"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

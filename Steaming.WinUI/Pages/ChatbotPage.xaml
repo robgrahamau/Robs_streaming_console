@@ -1,0 +1,496 @@
+<Page
+    x:Class="Steaming.WinUI.Pages.ChatbotPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    RequestedTheme="Dark">
+
+    <Grid RowDefinitions="Auto,*" Margin="16">
+        <Grid.Resources>
+            <Style TargetType="Border" x:Key="Card">
+                <Setter Property="Background" Value="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,12"/>
+            </Style>
+            <Style TargetType="TextBlock" x:Key="FieldLabel">
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="Foreground" Value="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                <Setter Property="Margin" Value="0,0,0,4"/>
+            </Style>
+        </Grid.Resources>
+
+        <!-- Bot Account bar -->
+        <Border Grid.Row="0" Style="{StaticResource Card}">
+            <StackPanel Orientation="Horizontal" Spacing="24">
+                <TextBlock Text="Bot Account" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="Twitch:" FontSize="12" VerticalAlignment="Center"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBlock x:Name="TwitchBotStatusText" FontSize="12" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="Kick:" FontSize="12" VerticalAlignment="Center"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBlock x:Name="KickBotStatusText" FontSize="12" VerticalAlignment="Center"/>
+                    <Button x:Name="ConnectKickBotBtn" Content="Connect" FontSize="12" Padding="10,4"
+                            Click="ConnectKickBot_Click"/>
+                    <Button x:Name="DisconnectKickBotBtn" Content="Disconnect" FontSize="12" Padding="10,4"
+                            Click="DisconnectKickBot_Click" IsEnabled="False"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <CheckBox x:Name="AnnounceLiveCheck" Content="Announce going live" FontSize="12" MinWidth="0"
+                              ToolTipService.ToolTip="When the stream goes live, the bot posts this message to both chats — also confirms outbound chat (incl. Kick bridge auth) works at stream start."
+                              Checked="AnnounceLive_Changed" Unchecked="AnnounceLive_Changed"/>
+                    <TextBox x:Name="AnnounceLiveMessageBox" Width="300" FontSize="12"
+                             PlaceholderText="Is now live: {title} / {game}"
+                             LostFocus="AnnounceLiveMessage_LostFocus"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Tabs -->
+        <Pivot Grid.Row="1">
+
+            <!-- ── Commands ── -->
+            <PivotItem Header="Commands">
+                <ScrollViewer>
+                    <StackPanel Spacing="0" Margin="0,8,0,0">
+
+                        <!-- Command list -->
+                        <ListView x:Name="CommandList" SelectionMode="Single" Margin="0,0,0,8"
+                                  MaxHeight="260">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="80,Auto,*,Auto" ColumnSpacing="8"
+                                          Margin="0,4">
+                                        <Border Grid.Column="0" Background="#333" CornerRadius="4"
+                                                Padding="6,3" HorizontalAlignment="Left">
+                                            <TextBlock FontSize="12" FontFamily="Consolas">
+                                                <Run Text="!" Foreground="#888"/>
+                                                <Run Text="{Binding Name}" Foreground="#9B59B6"/>
+                                            </TextBlock>
+                                        </Border>
+                                        <Border Grid.Column="1" CornerRadius="4" Padding="6,3"
+                                                HorizontalAlignment="Left">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="#1A3A5C"/>
+                                            </Border.Background>
+                                            <TextBlock Text="{Binding Target}" FontSize="11"
+                                                       Foreground="#5B9BD5"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="2" Text="{Binding Response}"
+                                                   FontSize="12" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"/>
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6">
+                                            <Button Content="✏" FontSize="11"
+                                                    Padding="6,2" Click="EditCommand_Click"
+                                                    Tag="{Binding}"/>
+                                            <Button Content="✕" FontSize="11"
+                                                    Padding="6,2" Click="DeleteCommand_Click"
+                                                    Tag="{Binding}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <!-- Add command form -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Add Command" FontSize="13" FontWeight="SemiBold"/>
+                                <Grid ColumnDefinitions="120,100,*,Auto" ColumnSpacing="8">
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Command name" Style="{StaticResource FieldLabel}"/>
+                                        <TextBox x:Name="NewCmdName" PlaceholderText="!command"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Platform" Style="{StaticResource FieldLabel}"/>
+                                        <ComboBox x:Name="NewCmdTarget" SelectedIndex="0" HorizontalAlignment="Stretch">
+                                            <ComboBoxItem Content="Both"/>
+                                            <ComboBoxItem Content="Twitch"/>
+                                            <ComboBoxItem Content="Kick"/>
+                                            <ComboBoxItem Content="YouTube"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Response  — use {user} {arg} {game} {title} {uptime}" Style="{StaticResource FieldLabel}"/>
+                                        <TextBox x:Name="NewCmdResponse" PlaceholderText="Response text"/>
+                                    </StackPanel>
+                                    <Button x:Name="AddCommandBtn" Grid.Column="3" Content="Add" VerticalAlignment="Bottom"
+                                            Click="AddCommand_Click"/>
+                                </Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="🔊 Choose sound…" Click="PickCmdSound_Click" Padding="10,4"/>
+                                    <TextBlock x:Name="NewCmdSoundLabel" Text="No sound" FontSize="11"
+                                               VerticalAlignment="Center"
+                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    <Button x:Name="ClearCmdSoundBtn" Content="✕" FontSize="11" Padding="6,2"
+                                            Visibility="Collapsed" Click="ClearCmdSound_Click"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <CheckBox x:Name="NewCmdAlertEnabled" Content="Fire alert" VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="NewCmdAlertName" MinWidth="200"
+                                              PlaceholderText="Select a unique alert…" VerticalAlignment="Center"/>
+                                    <TextBlock FontSize="11" VerticalAlignment="Center"
+                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                               Text="Create unique alerts on the Alerts page."/>
+                                </StackPanel>
+                                <Grid ColumnDefinitions="Auto,*,110" ColumnSpacing="12">
+                                    <CheckBox x:Name="NewCmdModOnly" Grid.Column="0" Content="Mods only"
+                                              VerticalAlignment="Bottom"/>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Allowed users (optional, comma-separated — also bypass Mods only)"
+                                                   Style="{StaticResource FieldLabel}"/>
+                                        <TextBox x:Name="NewCmdAllowedUsers" PlaceholderText="username1, username2"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Cooldown (sec)" Style="{StaticResource FieldLabel}"/>
+                                        <TextBox x:Name="NewCmdCooldown" PlaceholderText="10"/>
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                           Text="Mods and the broadcaster always bypass the cooldown."/>
+                                <TextBlock FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                           Text="Optional: the sound plays through the app's audio output whenever the command is used."/>
+                                <TextBlock x:Name="CmdFormError" FontSize="11" Foreground="#E74C3C"
+                                           Visibility="Collapsed"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="Remove Selected" Click="RemoveCommand_Click"
+                                            HorizontalAlignment="Left" Padding="12,6"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Pre-built examples -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Quick Add Examples" FontSize="13" FontWeight="SemiBold"/>
+                                <TextBlock FontSize="12"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                           Text="Click Add to instantly add a pre-built command."/>
+                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                                      ColumnSpacing="8" RowSpacing="6">
+                                    <StackPanel Grid.Row="0" Grid.Column="0">
+                                        <TextBlock Text="!uptime" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="Stream has been live for {uptime}" FontSize="11"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="0" Grid.Column="1" Content="Add" VerticalAlignment="Center"
+                                            Tag="uptime|Stream has been live for {uptime}"
+                                            Click="AddExample_Click"/>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="0">
+                                        <TextBlock Text="!game" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="Currently playing: {game}" FontSize="11"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="1" Grid.Column="1" Content="Add" VerticalAlignment="Center"
+                                            Tag="game|Currently playing: {game}"
+                                            Click="AddExample_Click"/>
+
+                                    <StackPanel Grid.Row="2" Grid.Column="0">
+                                        <TextBlock Text="!title" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="Stream title: {title}" FontSize="11"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="2" Grid.Column="1" Content="Add" VerticalAlignment="Center"
+                                            Tag="title|Stream title: {title}"
+                                            Click="AddExample_Click"/>
+
+                                    <StackPanel Grid.Row="3" Grid.Column="0">
+                                        <TextBlock Text="!so" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="Go check out @{arg}! twitch.tv/{arg} kick.com/{arg}" FontSize="11"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="3" Grid.Column="1" Content="Add" VerticalAlignment="Center"
+                                            Tag="so|Go check out @{arg}! twitch.tv/{arg} kick.com/{arg}"
+                                            Click="AddExample_Click"/>
+
+                                    <StackPanel Grid.Row="4" Grid.Column="0">
+                                        <TextBlock Text="!lurk" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="{}{user} is now lurking — thanks for hanging out!" FontSize="11"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="4" Grid.Column="1" Content="Add" VerticalAlignment="Center"
+                                            Tag="lurk|{user} is now lurking — thanks for hanging out!"
+                                            Click="AddExample_Click"/>
+
+                                    <StackPanel Grid.Row="5" Grid.Column="0">
+                                        <TextBlock Text="!discord" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="Join the Discord at discord.gg/YOURLINK" FontSize="11"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="5" Grid.Column="1" Content="Add" VerticalAlignment="Center"
+                                            Tag="discord|Join the Discord at discord.gg/YOURLINK"
+                                            Click="AddExample_Click"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </PivotItem>
+
+            <!-- ── Shouts (event-triggered) ── -->
+            <PivotItem Header="Shouts">
+                <ScrollViewer>
+                    <StackPanel Spacing="0" Margin="0,8,0,0">
+
+                        <TextBlock FontSize="12" Margin="0,0,0,8"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                   TextWrapping="Wrap">
+                            Shouts fire automatically when someone follows, subscribes, raids, etc.
+                            Variables: {user}, {months} (sub), {viewers} (raid), {count} (gift subs).
+                        </TextBlock>
+
+                        <!-- Shout list -->
+                        <ListView x:Name="ShoutList" SelectionMode="Single" Margin="0,0,0,8"
+                                  MaxHeight="240">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="90,80,*,Auto" ColumnSpacing="8"
+                                          Margin="0,4">
+                                        <Border Grid.Column="0" Background="#1A3A1A" CornerRadius="4"
+                                                Padding="6,3" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding EventFilter}" FontSize="11"
+                                                       Foreground="#4CAF50"/>
+                                        </Border>
+                                        <Border Grid.Column="1" Background="#333" CornerRadius="4"
+                                                Padding="6,3" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding Target}" FontSize="11"
+                                                       Foreground="#888"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="2" Text="{Binding Response}"
+                                                   FontSize="12" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6">
+                                            <Button Content="✏" FontSize="11"
+                                                    Padding="6,2" Click="EditShout_Click"
+                                                    Tag="{Binding}"/>
+                                            <Button Content="✕" FontSize="11"
+                                                    Padding="6,2" Click="DeleteShout_Click"
+                                                    Tag="{Binding}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <!-- Add shout form -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Add Shout" FontSize="13" FontWeight="SemiBold"/>
+                                <Grid ColumnDefinitions="140,100,*,Auto" ColumnSpacing="8">
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Event" Style="{StaticResource FieldLabel}"/>
+                                        <ComboBox x:Name="NewShoutEvent" SelectedIndex="0"
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBoxItem Content="Follow"       Tag="Follow"/>
+                                            <ComboBoxItem Content="Subscribe"    Tag="Subscribe"/>
+                                            <ComboBoxItem Content="Gift Sub"     Tag="GiftSubscribe"/>
+                                            <ComboBoxItem Content="Raid"         Tag="Raid"/>
+                                            <ComboBoxItem Content="Bits"         Tag="Bits"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Platform" Style="{StaticResource FieldLabel}"/>
+                                        <ComboBox x:Name="NewShoutTarget" SelectedIndex="0"
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBoxItem Content="Both"/>
+                                            <ComboBoxItem Content="Twitch"/>
+                                            <ComboBoxItem Content="Kick"/>
+                                            <ComboBoxItem Content="YouTube"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Response" Style="{StaticResource FieldLabel}"/>
+                                        <TextBox x:Name="NewShoutResponse"
+                                                 PlaceholderText="Thanks for the follow, {user}!"/>
+                                    </StackPanel>
+                                    <Button x:Name="AddShoutBtn" Grid.Column="3" Content="Add" VerticalAlignment="Bottom"
+                                            Click="AddShout_Click"/>
+                                </Grid>
+                                <TextBlock x:Name="ShoutFormError" FontSize="11" Foreground="#E74C3C"
+                                           Visibility="Collapsed"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="Remove Selected" Click="RemoveShout_Click"
+                                            HorizontalAlignment="Left" Padding="12,6"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Shout examples -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Quick Add Shouts" FontSize="13" FontWeight="SemiBold"/>
+                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                                      ColumnSpacing="8" RowSpacing="6">
+                                    <StackPanel Grid.Row="0" Grid.Column="0">
+                                        <TextBlock Text="Follow" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="Thanks for the follow, {user}!" FontSize="11"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="0" Grid.Column="1" Content="Add" VerticalAlignment="Center"
+                                            Tag="Follow|Both|Thanks for the follow, {user}!"
+                                            Click="AddShoutExample_Click"/>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="0">
+                                        <TextBlock Text="Subscribe" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="Thank you {user} for subscribing — {months} months!" FontSize="11"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="1" Grid.Column="1" Content="Add" VerticalAlignment="Center"
+                                            Tag="Subscribe|Both|Thank you {user} for subscribing — {months} months!"
+                                            Click="AddShoutExample_Click"/>
+
+                                    <StackPanel Grid.Row="2" Grid.Column="0">
+                                        <TextBlock Text="Gift Sub" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="Massive thanks to {user} for gifting {count} subs!" FontSize="11"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="2" Grid.Column="1" Content="Add" VerticalAlignment="Center"
+                                            Tag="GiftSubscribe|Both|Massive thanks to {user} for gifting {count} subs!"
+                                            Click="AddShoutExample_Click"/>
+
+                                    <StackPanel Grid.Row="3" Grid.Column="0">
+                                        <TextBlock Text="Raid" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="Welcome raiders from {user} — {viewers} of you just arrived!" FontSize="11"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="3" Grid.Column="1" Content="Add" VerticalAlignment="Center"
+                                            Tag="Raid|Both|Welcome raiders from {user} — {viewers} of you just arrived!"
+                                            Click="AddShoutExample_Click"/>
+
+                                    <StackPanel Grid.Row="4" Grid.Column="0">
+                                        <TextBlock Text="Bits" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Text="Thank you {user} for the bits — you're amazing!" FontSize="11"
+                                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                    <Button Grid.Row="4" Grid.Column="1" Content="Add" VerticalAlignment="Center"
+                                            Tag="Bits|Both|Thank you {user} for the bits — you're amazing!"
+                                            Click="AddShoutExample_Click"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </PivotItem>
+
+            <!-- ── Timers ── -->
+            <PivotItem Header="Timers">
+                <ScrollViewer>
+                    <StackPanel Spacing="0" Margin="0,8,0,0">
+
+                        <TextBlock FontSize="12" Margin="0,0,0,8"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}">
+                            Timers send a message on a repeating interval. Interval is in minutes.
+                        </TextBlock>
+
+                        <ListView x:Name="TimerList" SelectionMode="Single" Margin="0,0,0,8"
+                                  MaxHeight="240">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="80,60,80,*,Auto" ColumnSpacing="8"
+                                          Margin="0,4">
+                                        <Border Grid.Column="0" Background="#333" CornerRadius="4"
+                                                Padding="6,3" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding Name}" FontSize="11" Foreground="#9B59B6"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2"
+                                                    VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding IntervalMinutes}" FontSize="11" Foreground="#888"/>
+                                            <TextBlock Text="min" FontSize="11" Foreground="#666"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="2" Background="#1A3A5C" CornerRadius="4"
+                                                Padding="6,3" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding Target}" FontSize="11" Foreground="#5B9BD5"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="3" Text="{Binding Message}"
+                                                   FontSize="12" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="6">
+                                            <Button Content="✏" FontSize="11"
+                                                    Padding="6,2" Click="EditTimer_Click"
+                                                    Tag="{Binding}"/>
+                                            <Button Content="✕" FontSize="11"
+                                                    Padding="6,2" Click="DeleteTimer_Click"
+                                                    Tag="{Binding}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Add Timer" FontSize="13" FontWeight="SemiBold"/>
+                                <Grid ColumnDefinitions="120,60,100,*,Auto" ColumnSpacing="8">
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Name" Style="{StaticResource FieldLabel}"/>
+                                        <TextBox x:Name="NewTimerName" PlaceholderText="timer-name"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Every (min)" Style="{StaticResource FieldLabel}"/>
+                                        <TextBox x:Name="NewTimerInterval" Text="30"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Platform" Style="{StaticResource FieldLabel}"/>
+                                        <ComboBox x:Name="NewTimerTarget" SelectedIndex="0"
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBoxItem Content="Both"/>
+                                            <ComboBoxItem Content="Twitch"/>
+                                            <ComboBoxItem Content="Kick"/>
+                                            <ComboBoxItem Content="YouTube"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="3">
+                                        <TextBlock Text="Message" Style="{StaticResource FieldLabel}"/>
+                                        <TextBox x:Name="NewTimerMessage"
+                                                 PlaceholderText="Message to send"/>
+                                    </StackPanel>
+                                    <Button x:Name="AddTimerBtn" Grid.Column="4" Content="Add" VerticalAlignment="Bottom"
+                                            Click="AddTimer_Click"/>
+                                </Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="Remove Selected" Click="RemoveTimer_Click"
+                                            HorizontalAlignment="Left" Padding="12,6"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </PivotItem>
+
+            <!-- ── Auto-Mod ── -->
+            <PivotItem Header="Auto-Mod">
+                <ScrollViewer>
+                    <StackPanel Spacing="10" Margin="0,8,0,0" MaxWidth="500">
+                        <TextBlock FontSize="12"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                   TextWrapping="Wrap">
+                            Auto-mod acts on Twitch chat only. It can delete messages and optionally timeout the sender.
+                        </TextBlock>
+                        <CheckBox x:Name="FilterLinksCheck"  Content="Block messages with links"/>
+                        <CheckBox x:Name="FilterCapsCheck"   Content="Block excessive ALL CAPS"/>
+                        <CheckBox x:Name="TimeoutCheck"      Content="Timeout on violation (instead of delete)"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="Timeout seconds:" VerticalAlignment="Center" FontSize="12"/>
+                            <TextBox x:Name="TimeoutSecsBox" Width="80" PlaceholderText="60"/>
+                        </StackPanel>
+                        <TextBlock Text="Blocked words (comma-separated):" FontSize="12"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                        <TextBox x:Name="BlockedWordsBox" PlaceholderText="word1, word2, word3"/>
+                        <Button Content="Save Auto-Mod" Click="SaveAutoMod_Click"
+                                HorizontalAlignment="Left" Padding="14,8"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </PivotItem>
+
+        </Pivot>
+    </Grid>
+</Page>

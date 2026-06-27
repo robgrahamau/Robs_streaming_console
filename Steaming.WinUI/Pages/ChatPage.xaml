@@ -1,0 +1,292 @@
+<Page
+    x:Class="Steaming.WinUI.Pages.ChatPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    RequestedTheme="Dark">
+
+    <Grid ColumnDefinitions="400,*">
+
+        <!-- ── Left column: settings ──────────────────────────────────────── -->
+        <ScrollViewer Grid.Column="0" Padding="20,20,12,20"
+                      BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                      BorderThickness="0,0,1,0">
+            <StackPanel Spacing="16" MaxWidth="380">
+
+                <!-- Profile selector -->
+                <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8" Padding="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="OBS Source Profile" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock FontSize="12" TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                   Text="Each OBS chat source can have its own settings."/>
+                        <ComboBox x:Name="ProfilePicker" HorizontalAlignment="Stretch"
+                                  SelectionChanged="ProfilePicker_Changed"
+                                  PlaceholderText="Select source…"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Colors -->
+                <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8" Padding="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Colors" FontSize="14" FontWeight="SemiBold"/>
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Background" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <Button x:Name="BgColorButton" Height="30" HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Padding="2">
+                                    <Border x:Name="BgColorSwatch" CornerRadius="4" BorderThickness="1"
+                                            BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"/>
+                                    <Button.Flyout>
+                                        <Flyout>
+                                            <ColorPicker x:Name="BgColorPicker" IsAlphaEnabled="False"
+                                                         IsColorSliderVisible="True" IsHexInputVisible="True"
+                                                         ColorChanged="BgColorPicker_ColorChanged"/>
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Text="Text" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <Button x:Name="TextColorButton" Height="30" HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Padding="2">
+                                    <Border x:Name="TextColorSwatch" CornerRadius="4" BorderThickness="1"
+                                            BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"/>
+                                    <Button.Flyout>
+                                        <Flyout>
+                                            <ColorPicker x:Name="TextColorPicker" IsAlphaEnabled="False"
+                                                         IsColorSliderVisible="True" IsHexInputVisible="True"
+                                                         ColorChanged="TextColorPicker_ColorChanged"/>
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="4">
+                                <TextBlock Text="Bits / amount" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <Button x:Name="BitsColorButton" Height="30" HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Padding="2">
+                                    <Border x:Name="BitsColorSwatch" CornerRadius="4" BorderThickness="1"
+                                            BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"/>
+                                    <Button.Flyout>
+                                        <Flyout>
+                                            <ColorPicker x:Name="BitsColorPicker" IsAlphaEnabled="False"
+                                                         IsColorSliderVisible="True" IsHexInputVisible="True"
+                                                         ColorChanged="BitsColorPicker_ColorChanged"/>
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="0,4,0,0">
+                            <TextBlock Grid.Column="0" Text="Bg opacity" FontSize="11" VerticalAlignment="Center"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            <Slider Grid.Column="1" x:Name="BgOpacitySlider" Minimum="0" Maximum="255"
+                                    StepFrequency="1" ValueChanged="BgOpacitySlider_ValueChanged"/>
+                            <TextBlock Grid.Column="2" x:Name="BgOpacityValue" MinWidth="28"
+                                       VerticalAlignment="Center" HorizontalTextAlignment="Right" FontSize="12"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Display -->
+                <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8" Padding="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Display" FontSize="14" FontWeight="SemiBold"/>
+                        <CheckBox x:Name="ShowMsgsCheck"       Content="Show chat messages"/>
+                        <CheckBox x:Name="ShowTimestampsCheck"  Content="Show timestamps"/>
+                        <CheckBox x:Name="ShowPlatformCheck"   Content="Show platform icon"/>
+                        <CheckBox x:Name="DisappearCheck"      Content="Make messages disappear"/>
+                        <CheckBox x:Name="FadeCheck"           Content="Fade text on disappear"/>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,2,0,0">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Disappear after (s)" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <TextBox x:Name="DisappearBox"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Text="Fade duration (s)" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <TextBox x:Name="FadeBox"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8"
+                              RowDefinitions="Auto,Auto" Margin="0,2,0,0">
+                            <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Show messages from" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <ComboBox x:Name="PlatformFilterPicker" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="All"/>
+                                    <ComboBoxItem Content="Twitch"/>
+                                    <ComboBoxItem Content="Kick"/>
+                                    <ComboBoxItem Content="YouTube"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4">
+                                <TextBlock Text="Display name color" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <ComboBox x:Name="NameColorModePicker" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="User color"/>
+                                    <ComboBoxItem Content="Platform color"/>
+                                    <ComboBoxItem Content="Base text color"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Message order" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <ComboBox x:Name="MessageStylePicker" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="Bottom-up"/>
+                                    <ComboBoxItem Content="Top-down"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+                                <TextBlock Text="Badge placement" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <ComboBox x:Name="BadgePlacementPicker" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="Before username"/>
+                                    <ComboBoxItem Content="After username"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="0,2,0,0">
+                            <TextBlock Grid.Column="0" Text="Max lines shown:"
+                                       VerticalAlignment="Center" FontSize="12"/>
+                            <TextBox Grid.Column="1" x:Name="MaxLinesBox" MaxWidth="80"
+                                     HorizontalAlignment="Left"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Font -->
+                <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8" Padding="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Font" FontSize="14" FontWeight="SemiBold"/>
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Family" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <TextBox x:Name="FontFamilyBox" PlaceholderText="Segoe UI"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Text="Size" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <TextBox x:Name="FontSizeBox"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="4">
+                                <TextBlock Text="Weight" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <ComboBox x:Name="FontWeightPicker" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="Normal"/>
+                                    <ComboBoxItem Content="Bold"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+                        <StackPanel Spacing="4" Margin="0,4,0,0">
+                            <TextBlock Text="Text align" FontSize="11"
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            <ComboBox x:Name="TextAlignPicker" HorizontalAlignment="Left" MinWidth="160">
+                                <ComboBoxItem Content="Left"/>
+                                <ComboBoxItem Content="Center"/>
+                                <ComboBoxItem Content="Right"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Layout -->
+                <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="8" Padding="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Layout" FontSize="14" FontWeight="SemiBold"/>
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Margin" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <TextBox x:Name="MarginBox"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Text="Padding" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <TextBox x:Name="PaddingBox"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="4">
+                                <TextBlock Text="Line spacing" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <TextBox x:Name="LineSpacingBox"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8" Margin="0,4,0,0">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Text shadow" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <TextBox x:Name="TextShadowBox"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Text="Outline size" FontSize="11"
+                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <TextBox x:Name="OutlineBox"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="4"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Apply to OBS" Click="Apply_Click"
+                            Style="{ThemeResource AccentButtonStyle}"
+                            HorizontalAlignment="Left"/>
+                    <Button Content="Clear OBS Chat" Click="ClearObsChat_Click"
+                            HorizontalAlignment="Left"/>
+                </StackPanel>
+                <Button Content="Send test messages to OBS" Click="SendTest_Click"
+                        HorizontalAlignment="Left"
+                        ToolTipService.ToolTip="Pushes a mixed set of sample chat lines to the OBS overlay and the app chat list — nothing is sent to Twitch/Kick/YouTube."/>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ── Right column: live chat preview ───────────────────────────── -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,*">
+
+            <!-- Preview header -->
+            <Border Grid.Row="0" Padding="12,8"
+                    Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}"
+                    BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                    BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="Chat Preview" FontSize="13" FontWeight="SemiBold"
+                               VerticalAlignment="Center"/>
+                    <TextBlock x:Name="PreviewSourceLabel" FontSize="12" VerticalAlignment="Center"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Preview canvas: dark outer, inner panel sized to OBS source -->
+            <Grid Grid.Row="1" Background="#0D0D0D">
+                <ScrollViewer HorizontalAlignment="Center" VerticalAlignment="Center"
+                              HorizontalScrollMode="Disabled" VerticalScrollMode="Disabled">
+                    <Border x:Name="ChatPreviewBorder"
+                            Width="400" MinHeight="600"
+                            CornerRadius="4"
+                            Background="#1A1A1A">
+                        <ItemsControl x:Name="ChatPreviewList" Padding="8,8,8,8">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <!-- Each item is a ChatSampleMessage built in code -->
+                                    <ContentPresenter Content="{Binding}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                </ScrollViewer>
+            </Grid>
+
+        </Grid>
+
+    </Grid>
+</Page>

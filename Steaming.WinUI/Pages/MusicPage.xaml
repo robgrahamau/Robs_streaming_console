@@ -1,0 +1,232 @@
+<Page
+    x:Class="Steaming.WinUI.Pages.MusicPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="using:Steaming.WinUI.Converters"
+    RequestedTheme="Dark">
+
+    <Page.Resources>
+        <conv:PathToImageConverter x:Key="PathToImage"/>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:HexToBrushConverter x:Key="HexToBrush"/>
+        <conv:BoolToFontWeightConverter x:Key="BoolToFontWeight"/>
+
+        <!-- Shared track row: art thumb, title/artist, lyrics badge -->
+        <DataTemplate x:Key="TrackRowTemplate">
+            <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="10" Padding="0,4">
+                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="4"
+                        Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+                    <Image Source="{Binding ArtPath, Converter={StaticResource PathToImage}}" Stretch="UniformToFill"/>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding Artist}" FontSize="12"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+                <Border Grid.Column="2" VerticalAlignment="Center" CornerRadius="3" Padding="4,1"
+                        Background="#3300B0FF"
+                        Visibility="{Binding HasLyrics, Converter={StaticResource BoolToVis}}"
+                        ToolTipService.ToolTip="Synced lyrics (.lrc/.srt) available">
+                    <TextBlock Text="♪ SYNC" FontSize="10" Foreground="#FF7FD8FF"/>
+                </Border>
+            </Grid>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid Margin="16" ColumnDefinitions="*,360" RowDefinitions="Auto,*,Auto">
+
+        <!-- ── Library source row ──────────────────────────────────────────── -->
+        <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Spacing="8" Margin="0,0,0,12">
+            <TextBlock Text="MUSIC LIBRARY" FontSize="12" FontWeight="Bold"
+                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                <TextBox x:Name="RootBox" Grid.Column="0" PlaceholderText="Music folder (scanned recursively)"
+                         Text="{Binding LibraryRoot, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <Button Grid.Column="1" Content="Browse…" Click="Browse_Click"/>
+                <Button Grid.Column="2" Content="Scan" Command="{Binding ScanCommand}"/>
+            </Grid>
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <TextBlock Grid.Column="0" Text="Output device" VerticalAlignment="Center"/>
+                <ComboBox x:Name="DeviceCombo" Grid.Column="1" HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding OutputDevices}"
+                          SelectionChanged="DeviceCombo_SelectionChanged"/>
+                <TextBlock Grid.Column="2" Text="{Binding StatusText}" VerticalAlignment="Center"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+            </Grid>
+        </StackPanel>
+
+        <!-- ── Library | Playlist ───────────────────────────────────────────── -->
+        <Grid Grid.Row="1" Grid.Column="0" Margin="0,0,12,0" ColumnDefinitions="*,*" ColumnSpacing="12">
+
+            <!-- Library (drag source) -->
+            <Grid Grid.Column="0" RowDefinitions="Auto,*">
+                <TextBlock Grid.Row="0" Text="LIBRARY  (drag → playlist · double-click to play)"
+                           FontSize="11" FontWeight="SemiBold" Margin="2,0,0,4"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                <ListView x:Name="TrackList" Grid.Row="1"
+                          ItemsSource="{Binding Tracks}"
+                          ItemTemplate="{StaticResource TrackRowTemplate}"
+                          SelectionMode="Extended"
+                          CanDragItems="True"
+                          DragItemsStarting="Library_DragItemsStarting"
+                          DragItemsCompleted="Library_DragItemsCompleted"
+                          DoubleTapped="TrackList_DoubleTapped"/>
+            </Grid>
+
+            <!-- Playlist (drop target) -->
+            <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto">
+                <TextBlock Grid.Row="0" Text="PLAYLIST" FontSize="11" FontWeight="SemiBold" Margin="2,0,0,4"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Margin="0,0,0,6">
+                    <ComboBox x:Name="PlaylistCombo" Grid.Column="0" HorizontalAlignment="Stretch"
+                              PlaceholderText="No playlists"
+                              ItemsSource="{Binding PlaylistNames}"
+                              SelectedItem="{Binding SelectedPlaylistName, Mode=TwoWay}"/>
+                    <Button Grid.Column="1" Content="New" Click="NewPlaylist_Click"/>
+                    <Button Grid.Column="2" Content="Delete" Command="{Binding DeletePlaylistCommand}"/>
+                </Grid>
+                <ListView x:Name="PlaylistList" Grid.Row="2"
+                          ItemsSource="{Binding PlaylistTracks}"
+                          ItemTemplate="{StaticResource TrackRowTemplate}"
+                          SelectionMode="Single"
+                          AllowDrop="True" CanDragItems="True" CanReorderItems="True"
+                          DragOver="Playlist_DragOver" Drop="Playlist_Drop"
+                          DoubleTapped="PlaylistList_DoubleTapped"
+                          KeyDown="PlaylistList_KeyDown"/>
+                <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="6" Margin="0,6,0,0">
+                    <Button Grid.Column="0" Content="▶  Play Playlist" HorizontalAlignment="Stretch"
+                            Command="{Binding PlayPlaylistCommand}"/>
+                    <Button Grid.Column="1" Content="Remove" Click="RemoveFromPlaylist_Click"/>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- ── Lyrics preview + overlay style panels ───────────────────────── -->
+        <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="260,*" RowSpacing="12">
+
+            <!-- WYSIWYG lyrics preview (mirrors the OBS lyrics overlay) -->
+            <Grid Grid.Row="0" RowDefinitions="Auto,*">
+                <TextBlock Grid.Row="0" Text="LYRICS PREVIEW" FontSize="11" FontWeight="SemiBold" Margin="2,0,0,4"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                <Border Grid.Row="1" CornerRadius="6"
+                        Background="{Binding LyBackgroundColorHex, Converter={StaticResource HexToBrush}}"
+                        BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}" BorderThickness="1"
+                        Padding="8">
+                    <ItemsControl ItemsSource="{Binding LyricLines}" VerticalAlignment="Center"
+                                  HorizontalAlignment="Stretch">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Text}"
+                                           FontSize="{Binding FontSize}"
+                                           FontFamily="{Binding FontFamily}"
+                                           FontWeight="{Binding IsActive, Converter={StaticResource BoolToFontWeight}}"
+                                           Foreground="{Binding ColorHex, Converter={StaticResource HexToBrush}}"
+                                           TextAlignment="Center" TextWrapping="NoWrap"
+                                           HorizontalAlignment="Stretch" Margin="0,1"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+            </Grid>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="14">
+
+                <TextBlock Text="NOW PLAYING OVERLAY" FontSize="12" FontWeight="Bold"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                <CheckBox Content="Show album art" IsChecked="{Binding NpShowArt, Mode=TwoWay}"/>
+                <TextBox Header="Font family" Text="{Binding NpFontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <NumberBox Header="Title size" Value="{Binding NpTitleSize, Mode=TwoWay}" SpinButtonPlacementMode="Inline" Minimum="6" Maximum="200"/>
+                <NumberBox Header="Artist size" Value="{Binding NpArtistSize, Mode=TwoWay}" SpinButtonPlacementMode="Inline" Minimum="6" Maximum="200"/>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBlock Grid.Column="0" Text="Text colour" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Width="56" Height="28"
+                            Click="NpTextColorPick_Click" ToolTipService.ToolTip="Pick text colour"
+                            Background="{Binding NpTextColorHex, Converter={StaticResource HexToBrush}}"/>
+                </Grid>
+
+                <TextBlock Text="LYRICS OVERLAY" FontSize="12" FontWeight="Bold" Margin="0,8,0,0"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                <CheckBox Content="Horizontal (single line)" IsChecked="{Binding LyHorizontal, Mode=TwoWay}"/>
+                <TextBox Header="Font family" Text="{Binding LyFontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <NumberBox Header="Font size" Value="{Binding LyFontSize, Mode=TwoWay}" SpinButtonPlacementMode="Inline" Minimum="6" Maximum="200"/>
+                <NumberBox Header="Lines shown (vertical)" Value="{Binding LyLineCount, Mode=TwoWay}" SpinButtonPlacementMode="Inline" Minimum="1" Maximum="15"/>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBlock Grid.Column="0" Text="Line colour" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Width="56" Height="28"
+                            Click="LyTextColorPick_Click" ToolTipService.ToolTip="Pick line colour"
+                            Background="{Binding LyTextColorHex, Converter={StaticResource HexToBrush}}"/>
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBlock Grid.Column="0" Text="Active line colour" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Width="56" Height="28"
+                            Click="LyActiveColorPick_Click" ToolTipService.ToolTip="Pick active line colour"
+                            Background="{Binding LyActiveColorHex, Converter={StaticResource HexToBrush}}"/>
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBlock Grid.Column="0" Text="Background colour (with transparency)" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                    <Button Grid.Column="1" Width="56" Height="28"
+                            Click="LyBackgroundColorPick_Click" ToolTipService.ToolTip="Pick background colour"
+                            Background="{Binding LyBackgroundColorHex, Converter={StaticResource HexToBrush}}"/>
+                </Grid>
+                <NumberBox Header="Minimum line time (ms, 0 = off)" Value="{Binding LyMinLineMs, Mode=TwoWay}" SpinButtonPlacementMode="Inline" Minimum="0" Maximum="5000" SmallChange="50" LargeChange="200"/>
+
+                <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"
+                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                           Text="Add the 'Streaming Now Playing' and 'Streaming Lyrics' sources in OBS. Changes here update them live."/>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ── Transport bar ────────────────────────────────────────────────── -->
+        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,12,0,0" Padding="12"
+                CornerRadius="6" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+            <Grid ColumnDefinitions="48,*,Auto" ColumnSpacing="12">
+                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="4"
+                        Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
+                    <Image Source="{Binding ArtPath, Converter={StaticResource PathToImage}}" Stretch="UniformToFill"/>
+                </Border>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding Artist}" FontSize="12"
+                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                               TextTrimming="CharacterEllipsis"/>
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Margin="0,2,0,0">
+                        <TextBox Grid.Column="0" Header="Displayed song name" PlaceholderText="Override title for this file"
+                                 Text="{Binding EditableTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 IsEnabled="{Binding HasTrack}"/>
+                        <Button Grid.Column="1" Content="Save" VerticalAlignment="Bottom"
+                                IsEnabled="{Binding HasTrack}"
+                                Command="{Binding SaveTitleOverrideCommand}"/>
+                        <Button Grid.Column="2" Content="Clear" VerticalAlignment="Bottom"
+                                IsEnabled="{Binding HasTitleOverride}"
+                                Command="{Binding ClearTitleOverrideCommand}"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                        <TextBlock Grid.Column="0" Text="{Binding PositionText}" FontSize="11" VerticalAlignment="Center"/>
+                        <!-- Pointer handlers are attached in code-behind with handledEventsToo=true:
+                             Slider marks pointer events handled internally, so XAML attrs fire unreliably. -->
+                        <Slider x:Name="SeekSlider" Grid.Column="1" Minimum="0"
+                                Maximum="{Binding DurationSeconds}"
+                                Value="{Binding PositionSeconds, Mode=TwoWay}"/>
+                        <TextBlock Grid.Column="2" Text="{Binding DurationText}" FontSize="11" VerticalAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <ToggleButton x:Name="ShuffleButton" Content="🔀" ToolTipService.ToolTip="Shuffle"
+                                  IsChecked="{Binding Shuffle, Mode=TwoWay}"/>
+                    <Button Content="⏮" ToolTipService.ToolTip="Previous" Command="{Binding PreviousCommand}"/>
+                    <Button Content="⏯" ToolTipService.ToolTip="Play/Pause" Command="{Binding PlayPauseCommand}"/>
+                    <Button Content="⏹" ToolTipService.ToolTip="Stop" Command="{Binding StopCommand}"/>
+                    <Button Content="⏭" ToolTipService.ToolTip="Next" Command="{Binding NextCommand}"/>
+                    <Slider x:Name="VolumeSlider" Width="90" Minimum="0" Maximum="1" StepFrequency="0.01"
+                            Value="{Binding Volume, Mode=TwoWay}" VerticalAlignment="Center"
+                            ToolTipService.ToolTip="Volume"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>
